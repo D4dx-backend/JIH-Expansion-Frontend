@@ -531,8 +531,8 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
               <span className="font-medium">{form.partE?.componentsToFormIn6Months?.malarvadi || 0}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">മറ്റ്:</span>
-              <span className="font-medium">{form.partE?.componentsToFormIn6Months?.other || 0}</span>
+                              <span className="text-gray-600">മലർവാടി:</span>
+                              <span className="font-medium">{form.partE?.componentsToFormIn6Months?.malarvadi || 0}</span>
             </div>
           </div>
         </div>
