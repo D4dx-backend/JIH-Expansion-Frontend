@@ -243,14 +243,14 @@ const malayalamLabels = {
   neighborhoodGroups: 'അയൽക്കൂട്ടങ്ങൾ',
   otherNGOs: 'മറ്റു NGO കൾ',
   palliative: 'പാലിയേറ്റീവ്',
-  otherActivities: 'മറ്റ് പ്രവർത്തനങ്ങൾ',
+  otherActivities: ' പ്രവർത്തനങ്ങൾ',
   
   // Part D - Systems
   interestFreeSystems: 'പലിശരഹിത സംവിധാനം',
   zakatCommittee: 'സകാത് കമ്മിറ്റി',
   areas: 'മേഖലകൾ',
   ourAreas: 'നമ്മുടെ മേഖലകൾ',
-  registeredNonOurFamilies: 'രജിസ്റ്റർ ചെയ്ത മറ്റ് കുടുംബങ്ങൾ',
+  registeredNonOurFamilies: 'രജിസ്റ്റർ ചെയ്ത  കുടുംബങ്ങൾ',
   peoplesFoundationBeneficiaries: 'പീപ്പിൾസ് ഫൗണ്ടേഷൻ ലഭിക്കുന്നവർ',
   housingProjectBeneficiaries: 'വീട് പദ്ധതി ലഭിക്കുന്നവർ',
   baytulZakatBeneficiaries: 'ബൈത്തുൽ സകാത് ലഭിക്കുന്നവർ',
@@ -892,7 +892,7 @@ export const downloadSingleFormPDF = async (form) => {
                 <Text style={styles.tableHeaderCellNarrow}>GIO</Text>
                 <Text style={styles.tableHeaderCellNarrow}>ടീൻ ഇന്ത്യ</Text>
                 <Text style={styles.tableHeaderCellNarrow}>മലർവാടി</Text>
-                <Text style={styles.tableHeaderCellNarrow}>മറ്റ്</Text>
+                <Text style={styles.tableHeaderCellNarrow}></Text>
               </View>
               
               <View style={styles.tableRow}>
@@ -903,7 +903,7 @@ export const downloadSingleFormPDF = async (form) => {
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partE?.componentsToFormIn6Months?.gio || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partE?.componentsToFormIn6Months?.teenIndia || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partE?.componentsToFormIn6Months?.malarvadi || '')}</Text>
-                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partE?.componentsToFormIn6Months?.other || '')}</Text>
+                {/* <Text style={styles.tableCellNarrow}>{safeToString(safeData.partE?.componentsToFormIn6Months?)}</Text> */}
               </View>
             </View>
           </View>
@@ -1443,7 +1443,7 @@ export const downloadAllFormsPDF = async (forms) => {
                     <Text style={styles.tableHeaderCellNarrow}>GIO</Text>
                     <Text style={styles.tableHeaderCellNarrow}>ടീൻ ഇന്ത്യ</Text>
                     <Text style={styles.tableHeaderCellNarrow}>മലർവാടി</Text>
-                    <Text style={styles.tableHeaderCellNarrow}>മറ്റ്</Text>
+                    <Text style={styles.tableHeaderCellNarrow}></Text>
                   </View>
                   
                   <View style={styles.tableRow}>

@@ -237,7 +237,7 @@ export const FormProvider = ({ children }) => {
         sio: null,
         gio: null,
         teenIndia: null,
-        other: null
+        malarvadi: null
       }
     }
   });
@@ -450,7 +450,7 @@ export const FormProvider = ({ children }) => {
         }
         
         // Check components to form in 6 months
-        const componentOrgs = ['jih', 'vanitha', 'solidarity', 'sio', 'gio', 'teenIndia', 'other'];
+        const componentOrgs = ['jih', 'vanitha', 'solidarity', 'sio', 'gio', 'teenIndia', 'malarvadi'];
         for (const org of componentOrgs) {
           if (formData.partE.componentsToFormIn6Months[org] === null || formData.partE.componentsToFormIn6Months[org] === undefined || formData.partE.componentsToFormIn6Months[org] === '') {
             return false;
@@ -542,7 +542,7 @@ export const FormProvider = ({ children }) => {
         panchayatsWithoutPresence: '',
         newComponentsLast5Years: { count: null, type: 'urban', details: '' },
         workersGrowthInLast5Years: { count: null, type: 'personalConnections' },
-        componentsToFormIn6Months: { jih: null, vanitha: null, solidarity: null, sio: null, gio: null, teenIndia: null, other: null }
+        componentsToFormIn6Months: { jih: null, vanitha: null, solidarity: null, sio: null, gio: null, teenIndia: null, malarvadi: null }
       }
     });
     setCurrentStep(1);

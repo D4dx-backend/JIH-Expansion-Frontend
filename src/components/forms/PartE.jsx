@@ -229,7 +229,7 @@ const PartE = ({ onSubmit, editingForm, isAdmin = false }) => {
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"
-                    value={formData.partE.componentsToFormIn6Months.jih}
+                    value={formData.partE.componentsToFormIn6Months.jih !== null && formData.partE.componentsToFormIn6Months.jih !== undefined ? formData.partE.componentsToFormIn6Months.jih : ''}
                     onChange={(e) => handleComponentsChange('jih', e.target.value)}
                     className="w-full px-2 py-1 border border-gray-300 rounded text-center"
                     placeholder="0"
@@ -238,7 +238,7 @@ const PartE = ({ onSubmit, editingForm, isAdmin = false }) => {
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"
-                    value={formData.partE.componentsToFormIn6Months.vanitha}
+                    value={formData.partE.componentsToFormIn6Months.vanitha !== null && formData.partE.componentsToFormIn6Months.vanitha !== undefined ? formData.partE.componentsToFormIn6Months.vanitha : ''}
                     onChange={(e) => handleComponentsChange('vanitha', e.target.value)}
                     className="w-full px-2 py-1 border border-gray-300 rounded text-center"
                     placeholder="0"
@@ -247,7 +247,7 @@ const PartE = ({ onSubmit, editingForm, isAdmin = false }) => {
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"
-                    value={formData.partE.componentsToFormIn6Months.solidarity}
+                    value={formData.partE.componentsToFormIn6Months.solidarity !== null && formData.partE.componentsToFormIn6Months.solidarity !== undefined ? formData.partE.componentsToFormIn6Months.solidarity : ''}
                     onChange={(e) => handleComponentsChange('solidarity', e.target.value)}
                     className="w-full px-2 py-1 border border-gray-300 rounded text-center"
                     placeholder="0"
@@ -256,7 +256,7 @@ const PartE = ({ onSubmit, editingForm, isAdmin = false }) => {
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"
-                    value={formData.partE.componentsToFormIn6Months.sio}
+                    value={formData.partE.componentsToFormIn6Months.sio !== null && formData.partE.componentsToFormIn6Months.sio !== undefined ? formData.partE.componentsToFormIn6Months.sio : ''}
                     onChange={(e) => handleComponentsChange('sio', e.target.value)}
                     className="w-full px-2 py-1 border border-gray-300 rounded text-center"
                     placeholder="0"
@@ -265,7 +265,7 @@ const PartE = ({ onSubmit, editingForm, isAdmin = false }) => {
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"
-                    value={formData.partE.componentsToFormIn6Months.gio}
+                    value={formData.partE.componentsToFormIn6Months.gio !== null && formData.partE.componentsToFormIn6Months.gio !== undefined ? formData.partE.componentsToFormIn6Months.gio : ''}
                     onChange={(e) => handleComponentsChange('gio', e.target.value)}
                     className="w-full px-2 py-1 border border-gray-300 rounded text-center"
                     placeholder="0"
@@ -274,7 +274,7 @@ const PartE = ({ onSubmit, editingForm, isAdmin = false }) => {
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"
-                    value={formData.partE.componentsToFormIn6Months.teenIndia}
+                    value={formData.partE.componentsToFormIn6Months.teenIndia !== null && formData.partE.componentsToFormIn6Months.teenIndia !== undefined ? formData.partE.componentsToFormIn6Months.teenIndia : ''}
                     onChange={(e) => handleComponentsChange('teenIndia', e.target.value)}
                     className="w-full px-2 py-1 border border-gray-300 rounded text-center"
                     placeholder="0"
@@ -283,7 +283,7 @@ const PartE = ({ onSubmit, editingForm, isAdmin = false }) => {
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"
-                    value={formData.partE.componentsToFormIn6Months.malarvadi}
+                    value={formData.partE.componentsToFormIn6Months.malarvadi !== null && formData.partE.componentsToFormIn6Months.malarvadi !== undefined ? formData.partE.componentsToFormIn6Months.malarvadi : ''}
                     onChange={(e) => handleComponentsChange('malarvadi', e.target.value)}
                     className="w-full px-2 py-1 border border-gray-300 rounded text-center"
                     placeholder="0"

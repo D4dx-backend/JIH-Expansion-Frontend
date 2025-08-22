@@ -32,7 +32,21 @@ const FormPage = ({ onBack, onSubmit, editingForm, isAdmin = false }) => {
         partB: editingForm.partB || {},
         partC: editingForm.partC || {},
         partD: editingForm.partD || {},
-        partE: editingForm.partE || {}
+        partE: {
+          areasWithoutPresence: editingForm.partE?.areasWithoutPresence || { description: '', type: 'urban' },
+          panchayatsWithoutPresence: editingForm.partE?.panchayatsWithoutPresence || '',
+          newComponentsLast5Years: editingForm.partE?.newComponentsLast5Years || { count: null, type: 'urban', details: '' },
+          workersGrowthInLast5Years: editingForm.partE?.workersGrowthInLast5Years || { count: null, type: 'personalConnections' },
+          componentsToFormIn6Months: editingForm.partE?.componentsToFormIn6Months || {
+            jih: null,
+            vanitha: null,
+            solidarity: null,
+            sio: null,
+            gio: null,
+            teenIndia: null,
+            malarvadi: null
+          }
+        }
       };
       setFormData(normalizedFormData);
     }
@@ -77,52 +91,42 @@ const FormPage = ({ onBack, onSubmit, editingForm, isAdmin = false }) => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center py-4 gap-4">
-            <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
               <button
                 onClick={onBack}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4" />
+                <span>തിരികെ പോകുക</span>
               </button>
-              <div className="flex-1 sm:flex-none">
-                <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
-                  {editingForm && editingForm._id ? 'ഫോം എഡിറ്റ് ചെയ്യുക' : 'ഓർഗനൈസേഷൻ എക്സ്പാൻഷൻ ഫോം'}
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">
+                  {editingForm && editingForm._id ? 'ഫോം എഡിറ്റ് ചെയ്യുക' : 'പുതിയ ഫോം'}
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-500">
-                  {getStepTitle()}
-                </p>
+                <p className="text-sm text-gray-600">{getStepTitle()}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="text-xs sm:text-sm text-gray-500">
-                Step {currentStep} of 5
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Progress Bar */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-4">
-            <div className="flex items-center justify-center space-x-2 sm:space-x-4">
+            
+            {/* Progress Steps */}
+            <div className="hidden md:flex items-center space-x-2">
               {[1, 2, 3, 4, 5].map((step) => (
                 <div key={step} className="flex items-center">
                   <div
-                    className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
-                      step <= currentStep
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                      step === currentStep
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-500'
+                        : step < currentStep
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200 text-gray-600'
                     }`}
                   >
-                    {step}
+                    {step < currentStep ? '✓' : step}
                   </div>
                   {step < 5 && (
                     <div
-                      className={`w-4 sm:w-8 h-1 mx-1 sm:mx-2 ${
-                        step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                      className={`w-8 h-1 mx-2 ${
+                        step < currentStep ? 'bg-green-500' : 'bg-gray-200'
                       }`}
                     />
                   )}
@@ -131,13 +135,11 @@ const FormPage = ({ onBack, onSubmit, editingForm, isAdmin = false }) => {
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-sm">
-          {renderCurrentStep()}
-        </div>
+      <main className="max-w-7xl mx-auto">
+        {renderCurrentStep()}
       </main>
     </div>
   );
