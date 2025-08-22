@@ -892,7 +892,6 @@ export const downloadSingleFormPDF = async (form) => {
                 <Text style={styles.tableHeaderCellNarrow}>GIO</Text>
                 <Text style={styles.tableHeaderCellNarrow}>ടീൻ ഇന്ത്യ</Text>
                 <Text style={styles.tableHeaderCellNarrow}>മലർവാടി</Text>
-                <Text style={styles.tableHeaderCellNarrow}></Text>
               </View>
               
               <View style={styles.tableRow}>
@@ -1454,7 +1453,6 @@ export const downloadAllFormsPDF = async (forms) => {
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partE?.componentsToFormIn6Months?.gio || '')}</Text>
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partE?.componentsToFormIn6Months?.teenIndia || '')}</Text>
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partE?.componentsToFormIn6Months?.malarvadi || '')}</Text>
-                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partE?.componentsToFormIn6Months?.other || '')}</Text>
                   </View>
                 </View>
               </View>

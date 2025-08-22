@@ -3,6 +3,7 @@ import { ArrowLeft, FileText, Calendar, User, Edit, Trash2, Download } from 'luc
 import axios from 'axios';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { downloadSingleFormPDF } from '../utils/pdfGenerator.jsx';
+import jihLogo from '../assets/jih-logo2.png';
 
 const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = false }) => {
   const [form, setForm] = useState(null);
@@ -555,7 +556,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div className="flex items-center space-x-2 sm:space-x-3 flex-1 sm:flex-none">
-                <img src="/src/assets/jih-logo2.png" alt="JIH Logo" className="h-6 sm:h-8 w-auto" />
+                <img src={jihLogo} alt="JIH Logo" className="h-6 sm:h-8 w-auto" />
                 <div>
                   <h1 className="text-base sm:text-lg font-semibold text-gray-900">ഫോം വിവരങ്ങൾ</h1>
                   <p className="text-xs sm:text-sm text-gray-500">{form.district}</p>
