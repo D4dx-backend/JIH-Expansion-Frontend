@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
-import FormSubmissionPage from './pages/FormSubmissionPage';
+import UserDashboardWrapper from './components/UserDashboardWrapper';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 
@@ -72,7 +72,7 @@ function App() {
           path="/dashboard" 
           element={
             isAuthenticated ? (
-              <FormSubmissionPage onLogout={handleLogout} />
+              <UserDashboardWrapper onLogout={handleLogout} />
             ) : (
               <Navigate to="/" replace />
             )
@@ -95,6 +95,16 @@ function App() {
               <AdminDashboardPage onLogout={handleAdminLogout} />
             ) : (
               <Navigate to="/admin-login" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/form" 
+          element={
+            isAuthenticated ? (
+              <UserDashboardWrapper onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/" replace />
             )
           } 
         />

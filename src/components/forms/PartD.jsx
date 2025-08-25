@@ -171,7 +171,7 @@ const PartD = () => {
 
               {/* Non Workers in Madhyamam Readers */}
               <tr>
-                <td className="border border-gray-300 px-4 py-3 font-medium">6. മാധ്യമം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ (ഏകദേശം)*</td>
+                <td className="border border-gray-300 px-4 py-3 font-medium">6. മാധ്യമം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ *.</td>
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"
@@ -185,7 +185,7 @@ const PartD = () => {
 
               {/* Non Workers in Prabodhanam Readers */}
               <tr>
-                <td className="border border-gray-300 px-4 py-3 font-medium">7. പ്രബോധനം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ *</td>
+                <td className="border border-gray-300 px-4 py-3 font-medium">7. പ്രബോധനം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ *.</td>
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"
@@ -199,7 +199,7 @@ const PartD = () => {
 
               {/* Non Workers in Aaramam Readers */}
               <tr>
-                <td className="border border-gray-300 px-4 py-3 font-medium">8. ആരാമം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ *</td>
+                <td className="border border-gray-300 px-4 py-3 font-medium">8. ആരാമം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ *.</td>
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"
@@ -213,7 +213,7 @@ const PartD = () => {
 
               {/* Non Workers in Ayah Users */}
               <tr>
-                <td className="border border-gray-300 px-4 py-3 font-medium">9. ആയാത്ത് ദർസെ ഖുർആൻ സ്ഥിരമായി ഉപയോഗപ്പെടുത്തുന്ന പ്രവർത്തകരല്ലാത്തവർ*</td>
+                <td className="border border-gray-300 px-4 py-3 font-medium">9. ആയാത്ത് ദർസെ ഖുർആൻ സ്ഥിരമായി ഉപയോഗപ്പെടുത്തുന്ന പ്രവർത്തകരല്ലാത്തവർ *.</td>
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"
@@ -253,7 +253,7 @@ const PartD = () => {
 
               {/* Influential Mahalls */}
               <tr>
-                <td className="border border-gray-300 px-4 py-3 font-medium">11. നമുക്ക് സ്വാധീനമുള്ള (കമ്മറ്റി പ്രാതിനിധ്യം) മറ്റു പൊതു മഹല്ലുകൾ</td>
+                <td className="border border-gray-300 px-4 py-3 font-medium">11. നമുക്ക് സ്വാധീനമുള്ള (കമ്മറ്റി പ്രാതിനിധ്യം) മറ്റു പൊതു മഹല്ലുകൾ (എണ്ണം).</td>
                 <td className="border border-gray-300 px-4 py-3">
                   <input
                     type="number"

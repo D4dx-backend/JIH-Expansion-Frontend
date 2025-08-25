@@ -524,7 +524,7 @@ export const downloadSingleFormPDF = async (form) => {
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>മീഖാത്തിന്റെ തുടക്കത്തിൽ (2023) ഉണ്ടായിരുന്നവർ</Text>
+                <Text style={styles.tableCellWide}>മീഖാത്തിന്റെ തുടക്കത്തിൽ പ്രവര്‍ത്തകരുടെ എണ്ണം (2023) ഉണ്ടായിരുന്നത്.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.jih?.workers2023 || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.vanitha?.workers2023 || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.solidarity?.workers2023 || '')}</Text>
@@ -535,7 +535,7 @@ export const downloadSingleFormPDF = async (form) => {
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>ഇപ്പോൾ (2025) ഉള്ളവരുടെ എണ്ണം</Text>
+                <Text style={styles.tableCellWide}>ഇപ്പോൾ (2025) ഉള്ളത്.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.jih?.workers2025 || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.vanitha?.workers2025 || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.solidarity?.workers2025 || '')}</Text>
@@ -546,7 +546,7 @@ export const downloadSingleFormPDF = async (form) => {
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>ഘടകങ്ങളുടെ എണ്ണം 2023</Text>
+                <Text style={styles.tableCellWide}>ഘടകങ്ങളുടെ എണ്ണം (2023 ൽ).</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.jih?.components2023 || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.vanitha?.components2023 || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.solidarity?.components2023 || '')}</Text>
@@ -557,7 +557,7 @@ export const downloadSingleFormPDF = async (form) => {
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>ഘടകങ്ങളുടെ എണ്ണം 2025</Text>
+                <Text style={styles.tableCellWide}>ഘടകങ്ങളുടെ എണ്ണം (2025 ൽ).</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.jih?.components2025 || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.vanitha?.components2025 || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.organizations?.solidarity?.components2025 || '')}</Text>
@@ -571,7 +571,7 @@ export const downloadSingleFormPDF = async (form) => {
 
           {/* Part B - Additional Sections */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>തൗഹീദ് & മറാഅ്</Text>
+            <Text style={styles.sectionTitle}>തംഹീദുല്‍ മർഅഃ</Text>
             
             <View style={styles.table}>
               <View style={[styles.tableRow, styles.tableHeader]}>
@@ -580,24 +580,24 @@ export const downloadSingleFormPDF = async (form) => {
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>നിലവിലുള്ളത്</Text>
+                <Text style={styles.tableCellWide}>നിലവിലുള്ളത്.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.thawheedMaraa?.existing || '')}</Text>
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>വിദ്യാർത്ഥികൾ</Text>
+                <Text style={styles.tableCellWide}>പഠിതാക്കൾ.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.thawheedMaraa?.students || '')}</Text>
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>പ്രവർത്തകരല്ലാത്തവർ</Text>
+                <Text style={styles.tableCellWide}>പ്രവർത്തകരല്ലാത്തവർ.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.thawheedMaraa?.nonWorkers || '')}</Text>
               </View>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>ജുമാ പള്ളികൾ</Text>
+            <Text style={styles.sectionTitle}>ജുമുഅത്ത് പള്ളികൾ.</Text>
             
             <View style={styles.table}>
               <View style={[styles.tableRow, styles.tableHeader]}>
@@ -611,12 +611,12 @@ export const downloadSingleFormPDF = async (form) => {
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>ശരാശരി പങ്കെടുക്കുന്നവർ</Text>
+                <Text style={styles.tableCellWide}>പങ്കെടുക്കുന്നവർ.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.jumaMosques?.averageAttendees || '')}</Text>
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>പ്രവർത്തകരല്ലാത്തവർ (ഏകദേശം)</Text>
+                <Text style={styles.tableCellWide}>പ്രവർത്തകരല്ലാത്തവർ.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.jumaMosques?.nonWorkersApprox || '')}</Text>
               </View>
             </View>
@@ -647,7 +647,7 @@ export const downloadSingleFormPDF = async (form) => {
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>വിദ്യാർത്ഥികൾ</Text>
+                <Text style={styles.tableCellWide}>കുട്ടികളുടെ എണ്ണം</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.madrasas?.studentsCount || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.schools?.studentsCount || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.heavens?.studentsCount || '')}</Text>
@@ -657,13 +657,43 @@ export const downloadSingleFormPDF = async (form) => {
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>സ്റ്റാഫ് പ്രവർത്തകർ</Text>
+                <Text style={styles.tableCellWide}>Staff - പ്രവർത്തകർ.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.madrasas?.staffWorkers || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.schools?.staffWorkers || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.heavens?.staffWorkers || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.arabicColleges?.staffWorkers || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.artsColleges?.staffWorkers || '')}</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.mainCampuses?.staffWorkers || '')}</Text>
+              </View>
+              
+              <View style={styles.tableRow}>
+                <Text style={styles.tableCellWide}>Staff - മറ്റുള്ളവർ.</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.madrasas?.staffOthers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.schools?.staffOthers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.heavens?.staffOthers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.arabicColleges?.staffOthers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.artsColleges?.staffOthers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.mainCampuses?.staffOthers || '')}</Text>
+              </View>
+              
+              <View style={styles.tableRow}>
+                <Text style={styles.tableCellWide}>Non Teaching Staff - പ്രവർത്തകർ.</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.madrasas?.nonTeachingWorkers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.schools?.nonTeachingWorkers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.heavens?.nonTeachingWorkers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.arabicColleges?.nonTeachingWorkers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.artsColleges?.nonTeachingWorkers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.mainCampuses?.nonTeachingWorkers || '')}</Text>
+              </View>
+              
+              <View style={styles.tableRow}>
+                <Text style={styles.tableCellWide}>Non Teaching Staff - മറ്റുള്ളവർ.</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.madrasas?.nonTeachingOthers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.schools?.nonTeachingOthers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.heavens?.nonTeachingOthers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.arabicColleges?.nonTeachingOthers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.artsColleges?.nonTeachingOthers || '')}</Text>
+                <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.mainCampuses?.nonTeachingOthers || '')}</Text>
               </View>
             </View>
           </View>
@@ -770,22 +800,22 @@ export const downloadSingleFormPDF = async (form) => {
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>6. മാധ്യമം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ (ഏകദേശം)*</Text>
+                <Text style={styles.tableCellWide}>6. മാധ്യമം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ *.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partD?.nonWorkersinMadhyamamReaders || '')}</Text>
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>7. പ്രബോധനം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ *</Text>
+                <Text style={styles.tableCellWide}>7. പ്രബോധനം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ *.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partD?.nonWorkersinPrabodhanamReaders || '')}</Text>
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>8. ആരാമം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ *</Text>
+                <Text style={styles.tableCellWide}>8. ആരാമം വായനക്കാരിൽ പ്രവർത്തകരല്ലാത്തവർ *.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partD?.nonWorkersinAaramamReaders || '')}</Text>
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>9. ആയാത്ത് ദർസെ ഖുർആൻ സ്ഥിരമായി ഉപയോഗപ്പെടുത്തുന്ന പ്രവർത്തകരല്ലാത്തവർ*</Text>
+                <Text style={styles.tableCellWide}>9. ആയാത്ത് ദർസെ ഖുർആൻ സ്ഥിരമായി ഉപയോഗപ്പെടുത്തുന്ന പ്രവർത്തകരല്ലാത്തവർ *.</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partD?.nonWorkersinAyahUsers || '')}</Text>
               </View>
               
@@ -800,7 +830,7 @@ export const downloadSingleFormPDF = async (form) => {
               </View>
               
               <View style={styles.tableRow}>
-                <Text style={styles.tableCellWide}>11. നമുക്ക് സ്വാധീനമുള്ള (കമ്മറ്റി പ്രാതിനിധ്യം) മറ്റു പൊതു മഹല്ലുകൾ</Text>
+                <Text style={styles.tableCellWide}>11. നമുക്ക് സ്വാധീനമുള്ള (കമ്മറ്റി പ്രാതിനിധ്യം) മറ്റു പൊതു മഹല്ലുകൾ (എണ്ണം).</Text>
                 <Text style={styles.tableCellNarrow}>{safeToString(safeData.partD?.influentialMahalls || '')}</Text>
               </View>
               
@@ -1197,7 +1227,7 @@ export const downloadAllFormsPDF = async (forms) => {
                   </View>
                   
                   <View style={styles.tableRow}>
-                    <Text style={styles.tableCellWide}>വിദ്യാർത്ഥികൾ</Text>
+                    <Text style={styles.tableCellWide}>കുട്ടികളുടെ എണ്ണം</Text>
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.madrasas?.studentsCount || '')}</Text>
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.schools?.studentsCount || '')}</Text>
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.heavens?.studentsCount || '')}</Text>
@@ -1207,13 +1237,43 @@ export const downloadAllFormsPDF = async (forms) => {
                   </View>
                   
                   <View style={styles.tableRow}>
-                    <Text style={styles.tableCellWide}>സ്റ്റാഫ് പ്രവർത്തകർ</Text>
+                    <Text style={styles.tableCellWide}>Staff - പ്രവർത്തകർ</Text>
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.madrasas?.staffWorkers || '')}</Text>
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.schools?.staffWorkers || '')}</Text>
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.heavens?.staffWorkers || '')}</Text>
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.arabicColleges?.staffWorkers || '')}</Text>
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.artsColleges?.staffWorkers || '')}</Text>
                     <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.mainCampuses?.staffWorkers || '')}</Text>
+                  </View>
+                  
+                  <View style={styles.tableRow}>
+                    <Text style={styles.tableCellWide}>Staff - മറ്റുള്ളവർ</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.madrasas?.staffOthers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.schools?.staffOthers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.heavens?.staffOthers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.arabicColleges?.staffOthers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.artsColleges?.staffOthers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.mainCampuses?.staffOthers || '')}</Text>
+                  </View>
+                  
+                  <View style={styles.tableRow}>
+                    <Text style={styles.tableCellWide}>Non Teaching Staff - പ്രവർത്തകർ</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.madrasas?.nonTeachingWorkers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.schools?.nonTeachingWorkers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.heavens?.nonTeachingWorkers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.arabicColleges?.nonTeachingWorkers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.artsColleges?.nonTeachingWorkers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.mainCampuses?.nonTeachingWorkers || '')}</Text>
+                  </View>
+                  
+                  <View style={styles.tableRow}>
+                    <Text style={styles.tableCellWide}>Non Teaching Staff - മറ്റുള്ളവർ</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.madrasas?.nonTeachingOthers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.schools?.nonTeachingOthers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.heavens?.nonTeachingOthers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.arabicColleges?.nonTeachingOthers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.artsColleges?.nonTeachingOthers || '')}</Text>
+                    <Text style={styles.tableCellNarrow}>{safeToString(safeData.partB?.institutions?.mainCampuses?.nonTeachingOthers || '')}</Text>
                   </View>
                 </View>
               </View>

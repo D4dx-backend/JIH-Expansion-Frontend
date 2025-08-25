@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, Shield, FileText, Users, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -7,19 +7,36 @@ import bismillah from '../assets/bismillah.png';
 
 const LandingPage = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
-  const [code, setCode] = useState('');
+  const [districts, setDistricts] = useState([]);
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [accessCode, setAccessCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [showLoginForm, setShowLoginForm] = useState(false);
 
-  const handleCodeSubmit = async (e) => {
+  // Load districts on component mount
+  useEffect(() => {
+    loadDistricts();
+  }, []);
+
+  const loadDistricts = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/districts`);
+      setDistricts(response.data.districts);
+    } catch (error) {
+      console.error('Error loading districts:', error);
+    }
+  };
+
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/user/login`, {
-        code: code
+        district: selectedDistrict,
+        accessCode: accessCode
       });
 
       // Store token in localStorage
@@ -36,28 +53,28 @@ const LandingPage = ({ onLoginSuccess }) => {
     }
   };
 
-  const features = [
-    {
-      icon: <FileText className="w-6 h-6" />,
-      title: "Form Submission",
-      description: "Submit detailed organizational forms with ease"
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Secure Access",
-      description: "Protected with 6-digit authentication code"
-    },
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "User Management",
-      description: "Track and manage your form submissions"
-    },
-    {
-      icon: <CheckCircle className="w-6 h-6" />,
-      title: "Data Validation",
-      description: "Ensures accurate and complete information"
-    }
-  ];
+  // const features = [
+  //   {
+  //     icon: <FileText className="w-6 h-6" />,
+  //     title: "Form Submission",
+  //     description: "Submit detailed organizational forms with ease"
+  //   },
+  //   {
+  //     icon: <Shield className="w-6 h-6" />,
+  //     title: "Secure Access",
+  //     description: "Protected with 6-digit authentication code"
+  //   },
+  //   {
+  //     icon: <Users className="w-6 h-6" />,
+  //     title: "User Management",
+  //     description: "Track and manage your form submissions"
+  //   },
+  //   {
+  //     icon: <CheckCircle className="w-6 h-6" />,
+  //     title: "Data Validation",
+  //     description: "Ensures accurate and complete information"
+  //   }
+  // ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -97,7 +114,7 @@ const LandingPage = ({ onLoginSuccess }) => {
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+        {/* <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {features.map((feature, index) => (
             <div key={index} className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mb-4">
@@ -109,7 +126,7 @@ const LandingPage = ({ onLoginSuccess }) => {
               <p className="text-gray-600">{feature.description}</p>
             </div>
           ))}
-        </div>
+        </div> */}
 
         {/* Access Section */}
         <div className="max-w-md mx-auto">
@@ -122,27 +139,47 @@ const LandingPage = ({ onLoginSuccess }) => {
               <p className="text-gray-600">Enter your 6-digit access code to continue</p>
             </div>
 
-            {!showCodeInput ? (
+            {!showLoginForm ? (
               <button
-                onClick={() => setShowCodeInput(true)}
+                onClick={() => setShowLoginForm(true)}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
                 <span>Enter Code to Submit Forms</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
             ) : (
-              <form onSubmit={handleCodeSubmit} className="space-y-4">
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-2">
+                    Select District
+                  </label>
+                  <select
+                    id="district"
+                    value={selectedDistrict}
+                    onChange={(e) => setSelectedDistrict(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg font-mono"
+                    disabled={isLoading}
+                  >
+                    <option value="">Select a district</option>
+                                         {districts.map((district) => (
+                       <option key={district.name} value={district.name}>
+                         {district.name}
+                       </option>
+                     ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="accessCode" className="block text-sm font-medium text-gray-700 mb-2">
                     Access Code
                   </label>
                   <input
                     type="text"
-                    id="code"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    placeholder="Enter 6-digit code"
-                    maxLength={6}
+                    id="accessCode"
+                    value={accessCode}
+                    onChange={(e) => setAccessCode(e.target.value)}
+                                         placeholder="Enter district access code"
+                     maxLength={10}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg font-mono"
                     disabled={isLoading}
                   />
@@ -158,8 +195,9 @@ const LandingPage = ({ onLoginSuccess }) => {
                   <button
                     type="button"
                     onClick={() => {
-                      setShowCodeInput(false);
-                      setCode('');
+                      setShowLoginForm(false);
+                      setSelectedDistrict('');
+                      setAccessCode('');
                       setError('');
                     }}
                     className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
@@ -169,7 +207,7 @@ const LandingPage = ({ onLoginSuccess }) => {
                   </button>
                   <button
                     type="submit"
-                    disabled={isLoading || code.length !== 6}
+                                         disabled={isLoading || !selectedDistrict || !accessCode}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
                   >
                     {isLoading ? (
@@ -193,7 +231,7 @@ const LandingPage = ({ onLoginSuccess }) => {
         {/* Footer Info */}
         <div className="text-center mt-12">
           <p className="text-sm text-gray-500">
-            Need help? Contact your system administrator for access code
+            Need help? Contact your system administrator for district access code
           </p>
         </div>
       </main>

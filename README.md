@@ -4,7 +4,7 @@ A React-based frontend application for the Organization Expansion Portal with se
 
 ## Features
 
-- **Secure Authentication**: 6-digit code-based login system
+- **Secure Authentication**: District-based access code login system
 - **Professional Landing Page**: Modern UI with feature highlights
 - **Form Management Dashboard**: View and manage form submissions
 - **Responsive Design**: Works on desktop and mobile devices
@@ -49,9 +49,9 @@ src/
 
 ## Authentication Flow
 
-1. **Landing Page**: Users enter a 6-digit access code
-2. **Code Validation**: Backend validates the code against `USER_ACCESS_CODE`
-3. **JWT Token**: Upon successful validation, a JWT token is issued
+1. **Landing Page**: Users select their district and enter the district-specific access code
+2. **District & Code Validation**: Backend validates the district and access code combination
+3. **JWT Token**: Upon successful validation, a JWT token is issued with district information
 4. **Dashboard Access**: Users are redirected to the form management dashboard
 5. **Token Storage**: JWT token is stored in localStorage for session persistence
 
@@ -59,7 +59,8 @@ src/
 
 The frontend integrates with the following backend endpoints:
 
-- `POST /api/users/login` - User authentication with 6-digit code
+- `GET /api/user/districts` - Get list of available districts
+- `POST /api/user/login` - User authentication with district and access code
 - `GET /api/users/forms` - Retrieve user's form submissions
 - `POST /api/users/forms` - Create new form submission
 - `PUT /api/users/forms/:id` - Update existing form
@@ -92,7 +93,7 @@ The project uses ESLint for code quality. Run `npm run lint` to check for issues
 - JWT tokens are stored in localStorage
 - All API requests include Authorization headers
 - Protected routes redirect unauthenticated users
-- 6-digit code validation is handled server-side
+- District-based access code validation is handled server-side
 
 ## Backend Requirements
 
@@ -100,5 +101,5 @@ Ensure your backend server is running and configured with:
 
 - MongoDB connection
 - JWT_SECRET environment variable
-- USER_ACCESS_CODE environment variable
+- District-based access codes (configured in backend)
 - CORS enabled for frontend domain

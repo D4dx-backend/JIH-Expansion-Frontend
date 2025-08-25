@@ -204,7 +204,7 @@ const PartB = () => {
         {/* Thawheed Maraa */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">തംഹീദു മർഅ</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">തംഹീദുല്‍ മർഅഃ</label>
             <input
               type="number"
               value={formData.partB.thawheedMaraa.existing !== null && formData.partB.thawheedMaraa.existing !== undefined ? formData.partB.thawheedMaraa.existing : ''}
