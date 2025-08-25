@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useForm } from '../../contexts/FormContext';
 
 const PartA = () => {
   const { formData, updateFormData, nextStep, validateCurrentStep } = useForm();
+
+  // Auto-fill district from logged-in user data
+  useEffect(() => {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      const user = JSON.parse(userData);
+      if (user.district && !formData.district) {
+        updateFormData('district', user.district);
+      }
+    }
+  }, [formData.district, updateFormData]);
   
 
 
@@ -23,9 +34,7 @@ const PartA = () => {
     }
   };
 
-  const handleDistrictChange = (value) => {
-    updateFormData('district', value);
-  };
+
 
   const handleNext = () => {
     if (validateCurrentStep()) {
@@ -47,32 +56,18 @@ const PartA = () => {
         </p>
       </div>
 
-      {/* District Selection */}
+      {/* District Display (Auto-filled and disabled) */}
       <div className="mb-8">
         <label className="block text-lg font-medium text-gray-900 mb-3">
           ജില്ല:
         </label>
-        <select
+        <input
+          type="text"
           value={formData.district}
-          onChange={(e) => handleDistrictChange(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-        >
-          <option value="">ജില്ല തിരഞ്ഞെടുക്കുക</option>
-          <option value="Thiruvananthapuram">തിരുവനന്തപുരം</option>
-          <option value="Kollam">കൊല്ലം</option>
-          <option value="Pathanamthitta">പത്തനംതിട്ട</option>
-          <option value="Alappuzha">ആലപ്പുഴ</option>
-          <option value="Kottayam">കോട്ടയം</option>
-          <option value="Idukki">ഇടുക്കി</option>
-          <option value="Ernakulam">എറണാകുളം</option>
-          <option value="Thrissur">തൃശ്ശൂർ</option>
-          <option value="Palakkad">പാലക്കാട്</option>
-          <option value="Malappuram">മലപ്പുറം</option>
-          <option value="Kozhikode">കോഴിക്കോട്</option>
-          <option value="Wayanad">വയനാട്</option>
-          <option value="Kannur">കണ്ണൂർ</option>
-          <option value="Kasaragod">കാസർഗോഡ്</option>
-        </select>
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-lg cursor-not-allowed"
+          disabled
+          readOnly
+        />
       </div>
 
       {/* Form Fields */}
@@ -169,13 +164,17 @@ const PartA = () => {
             <label className="block text-lg font-medium text-gray-900 mb-2">
               7. മതസംഘടനകളിൽ ഭൂരിപക്ഷം
             </label>
-            <input
-              type="text"
+            <select
               value={formData.partA.majorityInReligiousOrganizations}
               onChange={(e) => handleInputChange('majorityInReligiousOrganizations', e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-              placeholder="വിവരങ്ങൾ നൽകുക"
-            />
+            >
+              <option value="">തിരഞ്ഞെടുക്കുക</option>
+              <option value="സമസ്ത ഇ.കെ">സമസ്ത ഇ.കെ.</option>
+              <option value="സമസ്ത എ.പി">സമസ്ത എ.പി.</option>
+              <option value="മുജാഹിദ്">മുജാഹിദ്.</option>
+              <option value="തബ്ലീഗ്">തബ്ലീഗ്.</option>
+            </select>
           </div>
 
           <div>
@@ -221,13 +220,18 @@ const PartA = () => {
             <label className="block text-lg font-medium text-gray-900 mb-2">
               11. കൂടുതൽ രാഷ്ട്രീയ സ്വാധീനം
             </label>
-            <input
-              type="text"
+            <select
               value={formData.partA.morePoliticalInfluence}
               onChange={(e) => handleInputChange('morePoliticalInfluence', e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-              placeholder="വിവരങ്ങൾ നൽകുക"
-            />
+            >
+              <option value="">തിരഞ്ഞെടുക്കുക</option>
+              <option value="മുസ്ലിം ലീഗ്">മുസ്ലിം ലീഗ്.</option>
+              <option value="കോൺഗ്രസ്">കോൺഗ്രസ്.</option>
+              <option value="സി.പി.എം">സി.പി.എം.</option>
+              <option value="സി.പി.ഐ">സി.പി.ഐ.</option>
+              <option value="വെൽഫെയർ">വെൽഫെയർ.</option>
+            </select>
           </div>
         </div>
       </div>

@@ -185,9 +185,14 @@ const FormSubmissionPage = ({ onLogout }) => {
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Welcome back!
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-1">
                 Manage your organizational form submissions and create new entries.
               </p>
+              {userData?.district && (
+                <p className="text-sm text-blue-600 font-medium">
+                  District: {userData.district}
+                </p>
+              )}
             </div>
             <button
               onClick={handleCreateForm}

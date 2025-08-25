@@ -216,26 +216,94 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
       {/* Educational Institutions */}
       <div className="mb-6">
         <h4 className="font-medium text-gray-700 mb-3">വിദ്യാഭ്യാസ സ്ഥാപനങ്ങൾ</h4>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Object.entries(form.partB?.institutions || {}).map(([instName, instData]) => (
-            <div key={instName} className="border border-gray-200 rounded-lg p-4">
-              <h5 className="font-medium text-gray-800 mb-2 capitalize">{instName.replace(/([A-Z])/g, ' $1').trim()}</h5>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">എണ്ണം:</span>
-                  <span>{instData.count || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">വിദ്യാർത്ഥികൾ:</span>
-                  <span>{instData.studentsCount || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">സ്റ്റാഫ് പ്രവർത്തകർ:</span>
-                  <span>{instData.staffWorkers || 0}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="w-full border border-gray-300 min-w-full">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="border border-gray-300 px-4 py-3 text-left font-medium">വിവരങ്ങൾ</th>
+                <th className="border border-gray-300 px-4 py-3 text-center font-medium">എണ്ണം</th>
+                <th className="border border-gray-300 px-4 py-3 text-center font-medium">കുട്ടികളുടെ എണ്ണം</th>
+                <th className="border border-gray-300 px-4 py-3 text-center font-medium" colSpan="2">Staff</th>
+                <th className="border border-gray-300 px-4 py-3 text-center font-medium" colSpan="2">Non Teaching Staff</th>
+              </tr>
+              <tr className="bg-gray-50">
+                <th className="border border-gray-300 px-4 py-3 text-left font-medium"></th>
+                <th className="border border-gray-300 px-4 py-3 text-center font-medium"></th>
+                <th className="border border-gray-300 px-4 py-3 text-center font-medium"></th>
+                <th className="border border-gray-300 px-4 py-3 text-center font-medium">പ്രവർത്തകർ</th>
+                <th className="border border-gray-300 px-4 py-3 text-center font-medium">മറ്റുള്ളവർ</th>
+                <th className="border border-gray-300 px-4 py-3 text-center font-medium">പ്രവർത്തകർ</th>
+                <th className="border border-gray-300 px-4 py-3 text-center font-medium">മറ്റുള്ളവർ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Madrasas */}
+              <tr>
+                <td className="border border-gray-300 px-4 py-3 font-medium">9. മദ്റസകളുടെ എണ്ണം</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.madrasas?.count || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.madrasas?.studentsCount || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.madrasas?.staffWorkers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.madrasas?.staffOthers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.madrasas?.nonTeachingWorkers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.madrasas?.nonTeachingOthers || 0}</td>
+              </tr>
+              
+              {/* Schools */}
+              <tr>
+                <td className="border border-gray-300 px-4 py-3 font-medium">10. സ്കൂളുകൾ (വിദ്യാകൗൺസിൽ)</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.schools?.count || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.schools?.studentsCount || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.schools?.staffWorkers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.schools?.staffOthers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.schools?.nonTeachingWorkers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.schools?.nonTeachingOthers || 0}</td>
+              </tr>
+              
+              {/* Heavens */}
+              <tr>
+                <td className="border border-gray-300 px-4 py-3 font-medium">11. ഹെവൻസ്</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.heavens?.count || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.heavens?.studentsCount || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.heavens?.staffWorkers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.heavens?.staffOthers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.heavens?.nonTeachingWorkers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.heavens?.nonTeachingOthers || 0}</td>
+              </tr>
+              
+              {/* Arabic Colleges */}
+              <tr>
+                <td className="border border-gray-300 px-4 py-3 font-medium">12. അറബി കോളേജുകൾ</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.arabicColleges?.count || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.arabicColleges?.studentsCount || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.arabicColleges?.staffWorkers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.arabicColleges?.staffOthers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.arabicColleges?.nonTeachingWorkers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.arabicColleges?.nonTeachingOthers || 0}</td>
+              </tr>
+              
+              {/* Arts Colleges */}
+              <tr>
+                <td className="border border-gray-300 px-4 py-3 font-medium">13. ആർട്സ് കോളേജുകൾ</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.artsColleges?.count || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.artsColleges?.studentsCount || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.artsColleges?.staffWorkers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.artsColleges?.staffOthers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.artsColleges?.nonTeachingWorkers || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.artsColleges?.nonTeachingOthers || 0}</td>
+              </tr>
+              
+              {/* Main Campuses */}
+              <tr>
+                <td className="border border-gray-300 px-4 py-3 font-medium">14. പ്രധാന കാമ്പസുകൾ (SIO, GIO സാന്നിധ്യമുള്ളത്)</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.mainCampuses?.count || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.mainCampuses?.studentsCount || 0}</td>
+                <td className="border border-gray-300 px-4 py-3 text-center bg-gray-100">-</td>
+                <td className="border border-gray-300 px-4 py-3 text-center bg-gray-100">-</td>
+                <td className="border border-gray-300 px-4 py-3 text-center bg-gray-100">-</td>
+                <td className="border border-gray-300 px-4 py-3 text-center bg-gray-100">-</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
