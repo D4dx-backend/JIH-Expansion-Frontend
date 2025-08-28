@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import UserDashboardWrapper from './components/UserDashboardWrapper';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import { validateUserToken, validateAdminToken } from './utils/auth';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -11,17 +12,27 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user or admin is already authenticated
-    const userToken = localStorage.getItem('userToken');
-    const adminToken = localStorage.getItem('adminToken');
-    
-    if (userToken) {
-      setIsAuthenticated(true);
-    }
-    if (adminToken) {
-      setIsAdminAuthenticated(true);
-    }
-    setIsLoading(false);
+    const checkAuthentication = async () => {
+      try {
+        // Validate both user and admin tokens
+        const [userValid, adminValid] = await Promise.all([
+          validateUserToken(),
+          validateAdminToken()
+        ]);
+        
+        setIsAuthenticated(userValid);
+        setIsAdminAuthenticated(adminValid);
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+        // On error, assume not authenticated
+        setIsAuthenticated(false);
+        setIsAdminAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthentication();
   }, []);
 
   const handleLoginSuccess = () => {
