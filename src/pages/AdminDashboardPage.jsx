@@ -5,30 +5,37 @@ import FormDetailPage from './FormDetailPage';
 import FormPage from './FormPage';
 import { FormProvider } from '../contexts/FormContext';
 import ConfirmationModal from '../components/ConfirmationModal';
+import MainAdminDashboard from '../components/dashboards/MainAdminDashboard';
 import jihLogo from '../assets/jih-logo2.png';
 import { downloadAllFormsPDF } from '../utils/pdfGenerator.jsx';
 
 const AdminDashboardPage = ({ onLogout }) => {
   const [adminData, setAdminData] = useState(null);
   const [forms, setForms] = useState([]);
+  const [monthlySurveys, setMonthlySurveys] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingForm, setEditingForm] = useState(null);
+  const [editingSurvey, setEditingSurvey] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [formToDelete, setFormToDelete] = useState(null);
+  const [surveyToDelete, setSurveyToDelete] = useState(null);
   const [showDetailView, setShowDetailView] = useState(false);
   const [showFormEdit, setShowFormEdit] = useState(false);
   const [selectedFormId, setSelectedFormId] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [activeTab, setActiveTab] = useState('yearly'); // 'yearly', 'monthly', 'stats'
   
   // Filtering and pagination
   const [searchTerm, setSearchTerm] = useState('');
   const [districtFilter, setDistrictFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalForms, setTotalForms] = useState(0);
+  const [totalSurveys, setTotalSurveys] = useState(0);
 
   useEffect(() => {
     // Get admin data from localStorage
@@ -37,9 +44,13 @@ const AdminDashboardPage = ({ onLogout }) => {
       setAdminData(JSON.parse(storedAdminData));
     }
     
-    // Load all forms
-    loadAllForms();
-  }, [currentPage, districtFilter, userFilter]);
+    // Load data based on active tab
+    if (activeTab === 'yearly') {
+      loadAllForms();
+    } else if (activeTab === 'monthly') {
+      loadAllMonthlySurveys();
+    }
+  }, [currentPage, districtFilter, userFilter, monthFilter, activeTab]);
 
   const loadAllForms = async () => {
     try {
@@ -64,6 +75,35 @@ const AdminDashboardPage = ({ onLogout }) => {
     } catch (error) {
       console.error('Error loading forms:', error);
       setError('Failed to load forms');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadAllMonthlySurveys = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: 10
+      });
+      
+      if (districtFilter) params.append('district', districtFilter);
+      if (userFilter) params.append('submittedBy', userFilter);
+      if (monthFilter) params.append('month', monthFilter);
+
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/monthly-surveys?${params}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      setMonthlySurveys(response.data.surveys);
+      setTotalPages(response.data.totalPages);
+      setTotalSurveys(response.data.totalSurveys);
+    } catch (error) {
+      console.error('Error loading monthly surveys:', error);
+      setError('Failed to load monthly surveys');
     } finally {
       setIsLoading(false);
     }
@@ -128,30 +168,42 @@ const AdminDashboardPage = ({ onLogout }) => {
   const confirmDelete = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/forms/${formToDelete._id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      
+      if (formToDelete) {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/forms/${formToDelete._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setFormToDelete(null);
+        loadAllForms();
+      } else if (surveyToDelete) {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/monthly-surveys/${surveyToDelete._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSurveyToDelete(null);
+        loadAllMonthlySurveys();
+      }
       
       setShowDeleteModal(false);
-      setFormToDelete(null);
-      loadAllForms();
     } catch (error) {
-      console.error('Error deleting form:', error);
-      setError('Failed to delete form');
+      console.error('Error deleting:', error);
+      setError('Failed to delete item');
     }
   };
 
   const handleSearch = () => {
     setCurrentPage(1);
-    loadAllForms();
+    if (activeTab === 'yearly') {
+      loadAllForms();
+    } else if (activeTab === 'monthly') {
+      loadAllMonthlySurveys();
+    }
   };
 
   const clearFilters = () => {
     setSearchTerm('');
     setDistrictFilter('');
     setUserFilter('');
+    setMonthFilter('');
     setCurrentPage(1);
   };
 
@@ -240,11 +292,49 @@ const AdminDashboardPage = ({ onLogout }) => {
         </div>
       </header>
 
+      {/* Tabs */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex space-x-8">
+            <button
+              onClick={() => setActiveTab('yearly')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'yearly'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              വാർഷിക സർവേകൾ ({totalForms})
+            </button>
+            <button
+              onClick={() => setActiveTab('monthly')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'monthly'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              മാസിക സർവേകൾ ({totalSurveys})
+            </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'stats'
+                  ? 'border-purple-500 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              സ്ഥിതിവിവരക്കണക്കുകൾ
+            </button>
+          </nav>
+        </div>
+      </div>
+
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Filters and Search */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className={`grid grid-cols-1 gap-4 ${activeTab === 'monthly' ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
               <div className="relative">
@@ -278,6 +368,22 @@ const AdminDashboardPage = ({ onLogout }) => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+            {activeTab === 'monthly' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Month</label>
+                <select
+                  value={monthFilter}
+                  onChange={(e) => setMonthFilter(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="">All Months</option>
+                  {['January', 'February', 'March', 'April', 'May', 'June', 
+                    'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                    <option key={month} value={month}>{month}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="flex items-end space-x-2">
               <button
                 onClick={handleSearch}
@@ -296,11 +402,12 @@ const AdminDashboardPage = ({ onLogout }) => {
           </div>
         </div>
 
-        {/* Forms List */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">All Submitted Forms</h2>
+        {/* Content based on active tab */}
+        {activeTab === 'yearly' && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">വാർഷിക സർവേകൾ</h2>
               <p className="text-sm text-gray-600">Showing {forms.length} of {totalForms} forms</p>
             </div>
             <button
@@ -415,16 +522,163 @@ const AdminDashboardPage = ({ onLogout }) => {
               )}
             </>
           )}
-        </div>
+          </div>
+        )}
+
+        {/* Monthly Surveys Tab */}
+        {activeTab === 'monthly' && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">മാസിക സർവേകൾ</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Total: {totalSurveys} monthly surveys
+                </p>
+              </div>
+            </div>
+
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                <span className="ml-2 text-gray-600">Loading monthly surveys...</span>
+              </div>
+            ) : monthlySurveys.length === 0 ? (
+              <div className="text-center py-12">
+                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No monthly surveys found</h3>
+                <p className="text-gray-600">No monthly surveys match your current filters.</p>
+              </div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          District
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Month
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Submitted By
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Population
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Submitted At
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {monthlySurveys.map((survey) => (
+                        <tr key={survey._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {survey.district}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {survey.month}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {survey.submittedBy}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {survey.partA?.totalPopulation || 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(survey.submittedAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedFormId(survey._id);
+                                  setShowDetailView(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                View
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingSurvey(survey);
+                                  setShowFormEdit(true);
+                                }}
+                                className="text-green-600 hover:text-green-900"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSurveyToDelete(survey);
+                                  setShowDeleteModal(true);
+                                }}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="px-6 py-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-700">
+                        Page {currentPage} of {totalPages}
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Statistics Tab */}
+        {activeTab === 'stats' && (
+          <MainAdminDashboard />
+        )}
       </main>
 
       {/* Confirmation Modals */}
       <ConfirmationModal
         isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setFormToDelete(null);
+          setSurveyToDelete(null);
+        }}
         onConfirm={confirmDelete}
-        title="Delete Form"
-        message={`Are you sure you want to delete the form from ${formToDelete?.district}? This action cannot be undone.`}
+        title={formToDelete ? "Delete Yearly Survey" : "Delete Monthly Survey"}
+        message={`Are you sure you want to delete the ${formToDelete ? 'yearly survey' : 'monthly survey'} from ${(formToDelete || surveyToDelete)?.district}? This action cannot be undone.`}
         confirmText="Delete"
         confirmColor="red"
       />

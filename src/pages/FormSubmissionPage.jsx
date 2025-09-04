@@ -7,26 +7,29 @@ import { FormProvider } from '../contexts/FormContext';
 import ConfirmationModal from '../components/ConfirmationModal';
 import jihLogo from '../assets/jih-logo2.png';
 
-const FormSubmissionPage = ({ onLogout }) => {
-  const [userData, setUserData] = useState(null);
+const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: propUserData }) => {
+  const [userData, setUserData] = useState(propUserData);
   const [forms, setForms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [editingForm, setEditingForm] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [formToDelete, setFormToDelete] = useState(null);
 
   useEffect(() => {
-    // Get user data from localStorage
-    const storedUserData = localStorage.getItem('userData');
-    if (storedUserData) {
-      setUserData(JSON.parse(storedUserData));
+    // Use prop userData if available, otherwise get from localStorage
+    if (propUserData) {
+      setUserData(propUserData);
+    } else {
+      const storedUserData = localStorage.getItem('userData');
+      if (storedUserData) {
+        setUserData(JSON.parse(storedUserData));
+      }
     }
     
     // Load user's forms
     loadUserForms();
-  }, []);
+  }, [propUserData]);
 
   const loadUserForms = async () => {
     try {
@@ -58,7 +61,11 @@ const FormSubmissionPage = ({ onLogout }) => {
   const [selectedFormId, setSelectedFormId] = useState(null);
 
   const handleCreateForm = () => {
-    setShowForm(true);
+    if (onCreateNew) {
+      onCreateNew();
+    } else {
+      setShowForm(true);
+    }
   };
 
   const handleFormBack = () => {
@@ -78,8 +85,12 @@ const FormSubmissionPage = ({ onLogout }) => {
   };
 
   const handleEditForm = (form) => {
-    setEditingForm(form);
-    setShowForm(true);
+    if (onEdit) {
+      onEdit(form);
+    } else {
+      setEditingForm(form);
+      setShowForm(true);
+    }
   };
 
   const handleDetailBack = () => {
@@ -162,8 +173,20 @@ const FormSubmissionPage = ({ onLogout }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-center py-4 sm:py-6 gap-4">
             <div className="flex items-center space-x-2 sm:space-x-4">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors text-sm"
+                >
+                  <span>←</span>
+                  <span>Back</span>
+                </button>
+              )}
               <img src={jihLogo} alt="JIH Logo" className="h-8 sm:h-12 w-auto" />
-              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 text-center sm:text-left">JIH Organisation Expansion</h1>
+              <div>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 text-center sm:text-left">വാർഷിക സർവേകൾ</h1>
+                <p className="text-sm text-gray-600">Yearly Survey Dashboard</p>
+              </div>
             </div>
             <button
               onClick={handleLogout}
