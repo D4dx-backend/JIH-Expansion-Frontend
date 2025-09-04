@@ -104,7 +104,7 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
                 className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center text-center"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />
-                <span className="text-sm leading-tight">തിരികെ<br />പോകുക</span>
+                <span className="text-sm leading-tight">Back</span>
               </button>
 
               <div className="flex items-center space-x-2">
