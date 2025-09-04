@@ -86,8 +86,11 @@ const MainAdminDashboard = ({ onBack }) => { // Fixed prop destructuring
     
       <div className="space-y-6">
      
-
-      
+        <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-purple-900">
+          <p className="text-sm">
+            This page shows overall progress across all districts. Cards show totals, and charts help compare districts and months in a simple way.
+          </p>
+        </div>
       {/* Overview Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
         <StatisticsCard
@@ -163,16 +166,16 @@ const MainAdminDashboard = ({ onBack }) => { // Fixed prop destructuring
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SurveyBarChart
           data={districtComparisonData}
-          title="District-wise Worker Comparison"
+          title="Workers: Yearly vs Avg Monthly (by District)"
           dataKey1="yearlyWorkers"
           dataKey2="avgMonthlyWorkers"
-          label1="Yearly Workers"
-          label2="Avg Monthly Workers"
+          label1="Yearly"
+          label2="Avg Monthly"
         />
         
         <SurveyPieChart
           data={surveyTypeData}
-          title="Survey Type Distribution"
+          title="Yearly vs Monthly Surveys"
         />
       </div>
 
@@ -180,7 +183,7 @@ const MainAdminDashboard = ({ onBack }) => { // Fixed prop destructuring
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SurveyBarChart
           data={monthlySubmissionsData}
-          title="Monthly Submissions by Month"
+          title="Submissions per Month (All Districts)"
           dataKey1="submissions"
           label1="Submissions"
           color1="#10B981"
@@ -188,7 +191,7 @@ const MainAdminDashboard = ({ onBack }) => { // Fixed prop destructuring
         
         <SurveyBarChart
           data={districtSubmissionData}
-          title="District Submission Status"
+          title="Submission Status by District"
           dataKey1="yearly"
           dataKey2="monthly"
           label1="Yearly Submitted"

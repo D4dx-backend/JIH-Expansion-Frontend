@@ -122,33 +122,38 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-blue-900">
+          <p className="text-sm">
+            This page shows your district's progress in simple numbers and charts. You can see totals from your last yearly survey and how this year's months are going.
+          </p>
+        </div>
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatisticsCard
             title="Total Workers"
-            value={stats.yearly?.totalWorkers || 0}
-            subtitle="From yearly survey"
+            value={(stats.yearly?.totalWorkers || 0).toLocaleString()}
+            subtitle="From last yearly survey"
             icon={Users}
             color="blue"
           />
           <StatisticsCard
-            title="Total Components"
-            value={stats.yearly?.totalComponents || 0}
-            subtitle="Active components"
+            title="Total Units (Components)"
+            value={(stats.yearly?.totalComponents || 0).toLocaleString()}
+            subtitle="Active units in your district"
             icon={Building}
             color="green"
           />
           <StatisticsCard
             title="Total Institutions"
-            value={stats.yearly?.totalInstitutions || 0}
-            subtitle="Educational institutions"
+            value={(stats.yearly?.totalInstitutions || 0).toLocaleString()}
+            subtitle="Schools, madrasas, colleges"
             icon={BookOpen}
             color="purple"
           />
           <StatisticsCard
-            title="Monthly Surveys"
-            value={stats.monthly?.count || 0}
-            subtitle="Submitted this year"
+            title="Monthly Surveys This Year"
+            value={(stats.monthly?.count || 0).toLocaleString()}
+            subtitle="How many months reported"
             icon={TrendingUp}
             color="yellow"
           />
@@ -179,28 +184,29 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SurveyBarChart
             data={yearlyVsMonthlyData}
-            title="Yearly vs Monthly Average Comparison"
+            title="This Year (Average) vs Last Year"
             dataKey1="workers"
             dataKey2="components"
             label1="Workers"
-            label2="Components"
+            label2="Units"
           />
           
           <SurveyPieChart
             data={organizationData}
-            title="Organization Distribution"
+            title="Workers by Group (approx.)"
           />
         </div>
+        <p className="text-xs text-gray-500">Tip: The bar chart compares last year's totals with this year's monthly average. The pie shows an approximate split of workers by group.</p>
 
         {/* Monthly Trend */}
         {monthlyTrendData.length > 0 && (
           <SurveyBarChart
             data={monthlyTrendData}
-            title="Monthly Survey Trends"
+            title="Month-by-Month Progress"
             dataKey1="workers"
             dataKey2="components"
             label1="Workers"
-            label2="Components"
+            label2="Units"
           />
         )}
 
@@ -215,7 +221,7 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Total Population</p>
-                <p className="text-lg font-medium">{stats.yearly.totalPopulation?.toLocaleString() || 'N/A'}</p>
+                <p className="text-lg font-medium">{stats.yearly.totalPopulation ? stats.yearly.totalPopulation.toLocaleString() : 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Last Yearly Survey</p>
@@ -223,7 +229,7 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Monthly Surveys This Year</p>
-                <p className="text-lg font-medium">{stats.monthly.count}</p>
+                <p className="text-lg font-medium">{(stats.monthly.count).toLocaleString()}</p>
               </div>
             </div>
           </div>
