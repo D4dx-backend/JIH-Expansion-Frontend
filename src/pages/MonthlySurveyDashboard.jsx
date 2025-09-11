@@ -1,27 +1,86 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Edit, Trash2, Calendar } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Calendar, Search, Filter, FileText, Users, Building } from 'lucide-react';
 import axios from 'axios';
-import jihLogo from '../assets/jih-logo2.png'; // ✅ adjust path as per your project
+import ConfirmationModal from '../components/ConfirmationModal';
+import jihLogo from '../assets/jih-logo2.png';
 
 const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
   const [surveys, setSurveys] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'district', 'areas', 'units'
+  
+  // Filtering and search
+  const [searchTerm, setSearchTerm] = useState('');
+  const [levelFilter, setLevelFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalSurveys, setTotalSurveys] = useState(0);
+  
+  // Modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [surveyToDelete, setSurveyToDelete] = useState(null);
+
+  // Determine user role and permissions
+  const userRole = userData?.role; // 'district', 'area', 'unit'
+  
+  // District admins can only create district-level surveys
+  // Area and unit users cannot create surveys
+  const canCreate = userRole === 'district' && activeTab === 'district';
+  const canEdit = userRole === 'district'; // Only district admins can edit
+  const canDelete = userRole === 'district'; // Only district admins can delete
+  
+  // Debug logging to help identify role issues
+  console.log('MonthlySurveyDashboard - userData:', userData);
+  console.log('MonthlySurveyDashboard - userRole:', userRole);
+  console.log('MonthlySurveyDashboard - activeTab:', activeTab);
+  console.log('MonthlySurveyDashboard - canCreate:', canCreate);
 
   useEffect(() => {
     fetchSurveys();
-  }, []);
+  }, [currentPage, levelFilter, monthFilter, activeTab]);
 
   const fetchSurveys = async () => {
     try {
+      setIsLoading(true);
       const token = localStorage.getItem('userToken');
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: 10,
+      });
+      
+      if (monthFilter) params.append('month', monthFilter);
+
+      let endpoint = '';
+      
+      // Determine which endpoint to use based on user role and active tab
+      if (userRole === 'district') {
+        if (activeTab === 'area') {
+          endpoint = '/api/user/monthly-surveys/area-level';
+        } else if (activeTab === 'unit') {
+          endpoint = '/api/user/monthly-surveys/unit-level';
+        } else {
+          // For 'all' and 'district' tabs, use the hierarchical endpoint
+          endpoint = '/api/user/monthly-surveys/district-hierarchy';
+          if (activeTab !== 'all') params.append('submissionLevel', activeTab);
+        }
+      } else {
+        // For area and unit users, use the hierarchical endpoint
+        endpoint = '/api/user/monthly-surveys/district-hierarchy';
+        if (activeTab !== 'all') params.append('submissionLevel', activeTab);
+      }
+
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/user/monthly-survey`,
+        `${import.meta.env.VITE_API_URL}${endpoint}?${params}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      
       setSurveys(response.data.surveys || []);
+      setTotalPages(response.data.totalPages || 1);
+      setTotalSurveys(response.data.totalSurveys || 0);
     } catch (error) {
       console.error('Error fetching monthly surveys:', error);
       setError('Failed to load monthly surveys');
@@ -30,172 +89,447 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
     }
   };
 
-  const handleDelete = async (surveyId) => {
-    if (!window.confirm('ഈ മാസിക സർവേ ഡിലീറ്റ് ചെയ്യാൻ ആഗ്രഹിക്കുന്നുണ്ടോ?')) {
-      return;
-    }
+  const handleDelete = async () => {
+    if (!surveyToDelete || !canDelete) return;
 
     try {
       const token = localStorage.getItem('userToken');
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/user/monthly-survey/${surveyId}`,
+        `${import.meta.env.VITE_API_URL}/api/user/monthly-survey/${surveyToDelete._id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setSurveys(surveys.filter((survey) => survey._id !== surveyId));
+      
+      // Update local state
+      setSurveys(surveys.filter((survey) => survey._id !== surveyToDelete._id));
+      setTotalSurveys(prev => prev - 1);
+      setShowDeleteModal(false);
+      setSurveyToDelete(null);
+      
+      // Refresh the data
+      fetchSurveys();
     } catch (error) {
       console.error('Error deleting survey:', error);
-      alert('സർവേ ഡിലീറ്റ് ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു');
+      setError('Failed to delete survey');
     }
+  };
+
+  const handleViewSurvey = (survey) => {
+    // For now, we'll use the same edit function but in view-only mode
+    // You can create a separate view component if needed
+    onEdit(survey);
+  };
+
+  const handleEditSurvey = (survey) => {
+    if (canEdit) {
+      onEdit(survey);
+    } else {
+      // For non-district users, treat as view-only
+      handleViewSurvey(survey);
+    }
+  };
+
+  // Add the missing handleSearch function - triggers a manual refresh
+  const handleSearch = () => {
+    setCurrentPage(1); // Reset to first page when searching
+    fetchSurveys();
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setLevelFilter('');
+    setMonthFilter('');
+    setCurrentPage(1);
   };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-GB');
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-        <div className="text-center bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-white/20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-          <p className="text-slate-600 font-medium">Loading monthly surveys...</p>
-        </div>
-      </div>
-    );
-  }
+  const getSubmissionLevelIcon = (level) => {
+    switch (level) {
+      case 'district': return <Building className="w-4 h-4" />;
+      case 'area': return <Users className="w-4 h-4" />;
+      case 'unit': return <FileText className="w-4 h-4" />;
+      default: return <Calendar className="w-4 h-4" />;
+    }
+  };
+
+  const getSubmissionLevelColor = (level) => {
+    switch (level) {
+      case 'district': return 'bg-blue-100 text-blue-800';
+      case 'area': return 'bg-green-100 text-green-800';
+      case 'unit': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const filteredSurveys = surveys.filter(survey => 
+    survey.district?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    survey.submittedBy?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    survey.areaName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    survey.unitName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    survey.month?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Group surveys by submission level for stats
+  const surveyStats = {
+    district: surveys.filter(s => s.submissionLevel === 'district').length,
+    area: surveys.filter(s => s.submissionLevel === 'area').length,
+    unit: surveys.filter(s => s.submissionLevel === 'unit').length,
+    total: surveys.length
+  };
+
+  // Get display title based on user role
+  const getDashboardTitle = () => {
+    switch (userRole) {
+      case 'area': return 'Area Monthly Surveys';
+      case 'unit': return 'Unit Monthly Surveys';
+      case 'district': return 'Monthly Surveys Dashboard';
+      default: return 'Monthly Surveys Dashboard';
+    }
+  };
+
+  // Get display subtitle based on user role
+  const getDashboardSubtitle = () => {
+    switch (userRole) {
+      case 'area': return `Area: ${userData?.areaName || userData?.areaId} • District: ${userData?.district}`;
+      case 'unit': return `Unit: ${userData?.unitName || userData?.unitId} • Area: ${userData?.areaName} • District: ${userData?.district}`;
+      case 'district': return `District: ${userData?.district}`;
+      default: return `District: ${userData?.district || 'Unknown'}`;
+    }
+  };
+
+  // Determine which tabs to show based on user role
+  const getAvailableTabs = () => {
+    switch (userRole) {
+      case 'unit':
+        return [{ key: 'all', label: 'My Surveys', count: surveyStats.total }];
+      case 'area':
+        return [
+          { key: 'all', label: 'All Surveys', count: surveyStats.total },
+          { key: 'area', label: 'Area Level', count: surveyStats.area },
+          { key: 'unit', label: 'Unit Level', count: surveyStats.unit }
+        ];
+      case 'district':
+        return [
+          { key: 'all', label: 'All Surveys', count: surveyStats.total },
+          { key: 'district', label: 'District Level', count: surveyStats.district },
+          { key: 'area', label: 'Area Level', count: surveyStats.area },
+          { key: 'unit', label: 'Unit Level', count: surveyStats.unit }
+        ];
+      default: // fallback for undefined role
+        return [
+          { key: 'all', label: 'All Surveys', count: surveyStats.total }
+        ];
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-slate-200">
+      <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            
-            {/* Left Section (Back + Logo + Title) */}
-            <div className="flex items-center space-x-4">
-              {/* Back Button */}
+          <div className="flex flex-col sm:flex-row justify-between items-center py-4 sm:py-6 gap-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <button
                 onClick={onBack}
-                className="bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white px-4 py-2 rounded-xl font-medium flex items-center space-x-2 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 text-sm"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span className="leading-tight text-center">
-                  Back
-                </span>
+                <span>Back</span>
               </button>
-
-              {/* Logo + Title */}
-              <div className="flex items-center space-x-3">
-                <img src={jihLogo} alt="JIH Logo" className="h-8 sm:h-12 w-auto" />
-                <div>
-                  <h1 className="text-xl font-semibold text-slate-800">മാസിക സർവേകൾ</h1>
-                  <p className="text-sm text-slate-600">District: {userData?.district}</p>
-                </div>
+              <img src={jihLogo} alt="JIH Logo" className="h-8 sm:h-12 w-auto" />
+              <div>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">{getDashboardTitle()}</h1>
+                <p className="text-sm text-gray-600">{getDashboardSubtitle()}</p>
               </div>
             </div>
-
-            {/* Right Section (Create Button) */}
-            <button
-              onClick={onCreateNew}
-              className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-2 rounded-xl font-medium flex items-center space-x-2 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>New Monthly Survey</span>
-            </button>
+            {canCreate && (
+              <button
+                onClick={onCreateNew}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>New District Survey</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && (
-          <div className="mb-6 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-2xl p-4 shadow-sm">
-            <p className="text-red-600 font-medium">{error}</p>
-          </div>
-        )}
-
-        {surveys.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-12 max-w-md mx-auto shadow-lg border border-white/20">
-              <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl mx-auto mb-6">
-                <Calendar className="w-10 h-10 text-emerald-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-4">
-                മാസിക സർവേകൾ ഇല്ല
-              </h3>
-              <p className="text-slate-600 mb-8 leading-relaxed">
-                നിങ്ങൾ ഇതുവരെ മാസിക സർവേകൾ സമർപ്പിച്ചിട്ടില്ല
-              </p>
+      {/* Tabs */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex space-x-8">
+            {getAvailableTabs().map((tab) => (
               <button
-                onClick={onCreateNew}
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 mx-auto transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === tab.key
+                    ? tab.key === 'district' ? 'border-blue-500 text-blue-600'
+                    : tab.key === 'area' ? 'border-green-500 text-green-600'
+                    : tab.key === 'unit' ? 'border-purple-500 text-purple-600'
+                    : 'border-gray-500 text-gray-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
-                <Plus className="w-5 h-5" />
-                <span>ആദ്യത്തെ മാസിക സർവേ സൃഷ്ടിക്കുക</span>
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Filters and Search */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search surveys..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+            {userRole === 'district' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                <select
+                  value={levelFilter}
+                  onChange={(e) => setLevelFilter(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="">All Levels</option>
+                  <option value="district">District</option>
+                  <option value="area">Area</option>
+                  <option value="unit">Unit</option>
+                </select>
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Month</label>
+              <select
+                value={monthFilter}
+                onChange={(e) => setMonthFilter(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="">All Months</option>
+                {['January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                  <option key={month} value={month}>{month}</option>
+                ))}
+              </select>
+            </div>
+            <div className={`flex items-end space-x-2 ${userRole === 'district' ? 'md:col-span-2' : 'md:col-span-3'}`}>
+              <button
+                onClick={handleSearch}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
+              >
+                <Filter className="w-4 h-4" />
+                <span>Filter</span>
+              </button>
+              <button
+                onClick={clearFilters}
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Clear
               </button>
             </div>
           </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {surveys.map((survey) => (
-              <div
-                key={survey._id}
-                className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 hover:shadow-xl hover:scale-105 transition-all duration-300"
-              >
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl">
-                        <Calendar className="w-5 h-5 text-emerald-600" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-slate-800">
-                        {survey.month}
-                      </h3>
-                    </div>
-                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-medium">
-                      {formatDate(survey.submittedAt)}
-                    </span>
-                  </div>
+        </div>
 
-                  <div className="space-y-3 mb-6">
-                    <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                      <span className="text-sm text-slate-600 font-medium">District:</span>
-                      <span className="text-sm text-slate-800 font-semibold">{survey.district}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                      <span className="text-sm text-slate-600 font-medium">Population:</span>
-                      <span className="text-sm text-slate-800 font-semibold">
-                        {survey.partA?.totalPopulation || 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <span className="text-sm text-slate-600 font-medium">Last Updated:</span>
-                      <span className="text-xs text-slate-600">{formatDate(survey.updatedAt)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => onEdit(survey)}
-                      className="flex-1 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white px-3 py-2 rounded-xl text-sm font-medium flex items-center justify-center space-x-2 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(survey._id)}
-                      className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-2 rounded-xl text-sm font-medium flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-600 text-sm">{error}</p>
           </div>
         )}
+
+        {/* Surveys Table */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Monthly Surveys</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Showing {filteredSurveys.length} of {totalSurveys} surveys
+              {userRole === 'district' && ' from district hierarchy'}
+              {userRole === 'area' && ' from area and units'}
+              {userRole === 'unit' && ' from unit'}
+            </p>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+              <span className="ml-2 text-gray-600">Loading surveys...</span>
+            </div>
+          ) : filteredSurveys.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No monthly surveys found</h3>
+              <p className="text-gray-600 mb-4">
+                {canCreate 
+                  ? 'No district-level surveys found. Create the first district survey.' 
+                  : 'No surveys available to view at this level.'}
+              </p>
+              {canCreate && (
+                <button
+                  onClick={onCreateNew}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
+                >
+                  Create District Survey
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Level & Location
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Month
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Submitted By
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Population
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Submitted At
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredSurveys.map((survey) => (
+                      <tr key={survey._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSubmissionLevelColor(survey.submissionLevel)} mr-2`}>
+                              {getSubmissionLevelIcon(survey.submissionLevel)}
+                              <span className="ml-1 capitalize">{survey.submissionLevel}</span>
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-900 mt-1">
+                            {survey.submissionLevel === 'district' && survey.district}
+                            {survey.submissionLevel === 'area' && (
+                              <div>
+                                <div className="font-medium">{survey.areaName || 'Unknown Area'}</div>
+                                <div className="text-xs text-gray-500">{survey.district}</div>
+                              </div>
+                            )}
+                            {survey.submissionLevel === 'unit' && (
+                              <div>
+                                <div className="font-medium">{survey.unitName || 'Unknown Unit'}</div>
+                                <div className="text-xs text-gray-500">{survey.areaName} • {survey.district}</div>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {survey.month}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {survey.submittedBy}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {survey.partA?.totalPopulation || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(survey.submittedAt)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleEditSurvey(survey)}
+                              className="text-green-600 hover:text-green-900"
+                              title={canEdit ? "Edit" : "View"}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            {canDelete && (
+                              <button
+                                onClick={() => {
+                                  setSurveyToDelete(survey);
+                                  setShowDeleteModal(true);
+                                }}
+                                className="text-red-600 hover:text-red-900"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </main>
+
+      {/* Delete Confirmation Modal - Only show for district admins */}
+      {canDelete && (
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSurveyToDelete(null);
+          }}
+          onConfirm={handleDelete}
+          title="Delete Monthly Survey"
+          message={`Are you sure you want to delete the monthly survey for ${surveyToDelete?.month} submitted by ${surveyToDelete?.submittedBy}? This action cannot be undone.`}
+          confirmText="Delete"
+          confirmColor="red"
+        />
+      )}
     </div>
   );
 };

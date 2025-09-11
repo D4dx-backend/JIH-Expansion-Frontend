@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Users, Building, BookOpen, TrendingUp, ArrowLeft, BarChart3 } from 'lucide-react';
+import { Users, Building, BookOpen, TrendingUp, ArrowLeft, BarChart3, MapPin } from 'lucide-react';
 import SurveyBarChart from '../charts/SurveyBarChart';
 import SurveyPieChart from '../charts/SurveyPieChart';
 import StatisticsCard from '../charts/StatisticsCard';
@@ -8,11 +8,15 @@ import jihLogo from '../../assets/jih-logo2.png';
 
 const DistrictAdminDashboard = ({ adminId, onBack }) => {
   const [stats, setStats] = useState(null);
+  const [areaCount, setAreaCount] = useState(0);
+  const [unitCount, setUnitCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [summary, setSummary] = useState('');
 
   useEffect(() => {
     loadDistrictStats();
+    loadHierarchyCounts();
   }, [adminId]);
 
   const loadDistrictStats = async () => {
@@ -25,11 +29,37 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
         }
       );
       setStats(response.data.stats);
+      console.log(response.data.stats);
+      setSummary(response.data.summary || '');
+      console.log(response.data.summary);
     } catch (error) {
       console.error('Error loading district stats:', error);
       setError('Failed to load statistics');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadHierarchyCounts = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('userData') || '{}');
+      const token = localStorage.getItem('userToken');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const distId = user?.district || user?.districtId || stats?.yearly?.district;
+      if (!distId) return;
+      const areasResp = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/hierarchy/areas/${encodeURIComponent(distId)}`, { headers });
+      const areas = areasResp.data?.data || [];
+      setAreaCount(areas.length);
+      let unitsTotal = 0;
+      for (const a of areas) {
+        try {
+          const unitsResp = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/hierarchy/units/${encodeURIComponent(a.id || a._id || a.code)}`, { headers });
+          unitsTotal += (unitsResp.data?.data || []).length;
+        } catch {}
+      }
+      setUnitCount(unitsTotal);
+    } catch (e) {
+      console.error('Hierarchy count error', e);
     }
   };
 
@@ -127,6 +157,13 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
             This page shows your district's progress in simple numbers and charts. You can see totals from your last yearly survey and how this year's months are going.
           </p>
         </div>
+        {/* AI Summary */}
+        {summary && (
+          <div className="bg-white p-4 rounded-lg shadow border">
+            <div className="text-sm text-gray-800">{summary}</div>
+          </div>
+        )}
+
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatisticsCard
@@ -156,6 +193,20 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
             subtitle="How many months reported"
             icon={TrendingUp}
             color="yellow"
+          />
+          <StatisticsCard
+            title="Total Areas"
+            value={areaCount}
+            subtitle="Under this district"
+            icon={MapPin}
+            color="blue"
+          />
+          <StatisticsCard
+            title="Total Units"
+            value={unitCount}
+            subtitle="Across all areas"
+            icon={MapPin}
+            color="green"
           />
         </div>
 

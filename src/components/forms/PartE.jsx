@@ -141,7 +141,7 @@ const PartE = ({ onSubmit, editingForm, isAdmin = false }) => {
         <label className="block text-lg font-medium text-gray-900 mb-3">
           3. കഴിഞ്ഞ 5 വർഷത്തിനിടയിൽ പുതുതായി ഉണ്ടായ ഘടകങ്ങളുടെ എണ്ണം (പോഷക സംഘടനകൾ ഉൾപ്പെടെ ഇനം തിരിച്ചെഴുതുക):
         </label>
-        <div className="space-y-4">
+        <div className="spacye-y-4">
           <input
             type="number"
             value={formData.partE.newComponentsLast5Years.count !== null && formData.partE.newComponentsLast5Years.count !== undefined ? formData.partE.newComponentsLast5Years.count : ''}

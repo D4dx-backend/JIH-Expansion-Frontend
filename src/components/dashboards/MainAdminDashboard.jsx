@@ -9,6 +9,7 @@ const MainAdminDashboard = ({ onBack }) => { // Fixed prop destructuring
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [summary, setSummary] = useState('');
 
   useEffect(() => {
     loadMainStats();
@@ -25,6 +26,7 @@ const MainAdminDashboard = ({ onBack }) => { // Fixed prop destructuring
       );
 
       setStats(response.data.stats);
+      setSummary(response.data.summary || '');
     } catch (error) {
       console.error('Error loading main stats:', error);
       setError('Failed to load statistics');
@@ -85,6 +87,11 @@ const MainAdminDashboard = ({ onBack }) => { // Fixed prop destructuring
   return (
     
       <div className="space-y-6">
+        {summary && (
+          <div className="bg-white p-4 rounded-lg shadow border">
+            <div className="text-sm text-gray-800">{summary}</div>
+          </div>
+        )}
      
         <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-purple-900">
           <p className="text-sm">
