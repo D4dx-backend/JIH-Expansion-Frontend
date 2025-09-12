@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { LogOut, FileText, Search, Filter, Edit, Trash2, Users, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
-import FormDetailPage from './FormDetailPage';
-import FormPage from './FormPage';
-import { FormProvider } from '../contexts/FormContext';
+import AreaSurveyDetailPage from './AreaSurveyDetailPage';
+import AreaSurveyEditPage from './AreaSurveyEditPage';
 import ConfirmationModal from '../components/ConfirmationModal';
 import StatisticsCard from '../components/charts/StatisticsCard';
 import SurveyBarChart from '../components/charts/SurveyBarChart';
@@ -132,16 +131,27 @@ const AreaDashboardPage = ({ onLogout }) => {
       if (unitFilter) params.append('unitId', unitFilter);
       if (monthFilter) params.append('month', monthFilter);
 
-      // This endpoint would need to be created in backend to filter by area
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/monthly-surveys/area?${params}`, {
+      // Use the area surveys endpoint
+      console.log('Fetching area surveys with params:', params.toString());
+      console.log('API URL:', `${import.meta.env.VITE_API_URL}/api/area/surveys?${params}`);
+      
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/area/surveys?${params}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       
-      setMonthlySurveys(response.data.surveys || []);
-      setTotalPages(response.data.totalPages || 1);
-      setTotalSurveys(response.data.totalSurveys || 0);
+      console.log('Area surveys response:', response.data);
+      
+      if (response.data.success) {
+        setMonthlySurveys(response.data.data || []);
+        setTotalPages(1); // Backend doesn't return pagination info yet
+        setTotalSurveys(response.data.data?.length || 0);
+      } else {
+        setMonthlySurveys([]);
+        setTotalPages(1);
+        setTotalSurveys(0);
+      }
     } catch (error) {
       console.error('Error loading monthly surveys:', error);
       setError('Failed to load monthly surveys');
@@ -180,6 +190,7 @@ const AreaDashboardPage = ({ onLogout }) => {
 
   const handleViewSurvey = (survey) => {
     setSelectedFormId(survey._id);
+    setEditingSurvey(survey);
     setShowDetailView(true);
   };
 
@@ -194,8 +205,7 @@ const AreaDashboardPage = ({ onLogout }) => {
   };
 
   const handleCreateSurvey = () => {
-    setEditingSurvey(null);
-    setShowCreateSurvey(true);
+    navigate('/area-survey');
   };
 
   const handleUnitClick = (unit) => {
@@ -239,7 +249,7 @@ const AreaDashboardPage = ({ onLogout }) => {
       const token = localStorage.getItem('userToken');
       
       if (surveyToDelete) {
-        await axios.delete(`${import.meta.env.VITE_API_URL}/api/user/monthly-survey/${surveyToDelete._id}`, {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/api/area/surveys/${surveyToDelete._id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setSurveyToDelete(null);
@@ -273,24 +283,25 @@ const AreaDashboardPage = ({ onLogout }) => {
 
   const filteredSurveys = monthlySurveys.filter(survey => 
     survey.district?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    survey.area?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    survey.submittedBy?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     survey.submittedBy?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     survey._id?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (showDetailView) {
     return (
-      <FormDetailPage
-        formId={selectedFormId}
-        formData={editingSurvey}
+      <AreaSurveyDetailPage
+        surveyId={selectedFormId}
         onBack={() => {
           setShowDetailView(false);
           setSelectedFormId(null);
           setEditingSurvey(null);
         }}
-        onEdit={(form) => {
+        onEdit={(survey) => {
           setShowDetailView(false);
           setSelectedFormId(null);
-          setEditingSurvey(form);
+          setEditingSurvey(survey);
           setShowFormEdit(true);
         }}
         onDelete={() => {
@@ -299,37 +310,24 @@ const AreaDashboardPage = ({ onLogout }) => {
           setEditingSurvey(null);
           loadMonthlySurveys();
         }}
-        isAdmin={false}
       />
     );
   }
 
-  if (showFormEdit || showCreateSurvey) {
+  if (showFormEdit) {
     return (
-      <FormProvider>
-        <FormPage
+      <AreaSurveyEditPage
+        surveyId={editingSurvey?._id}
           onBack={() => {
-            if (showCreateSurvey) {
-              setShowCreateSurvey(false);
-            } else {
               setShowFormEdit(false);
               setEditingSurvey(null);
-            }
           }}
-          onSubmit={() => {
-            if (showCreateSurvey) {
-              setShowCreateSurvey(false);
-            } else {
+        onSubmit={(updatedSurvey) => {
               setShowFormEdit(false);
               setEditingSurvey(null);
-            }
             loadMonthlySurveys();
           }}
-          editingForm={editingSurvey}
-          isAdmin={false}
-          formType="monthly"
         />
-      </FormProvider>
     );
   }
 
@@ -422,7 +420,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Search surveys..."
+                      placeholder="Search area surveys..."
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     />
                     <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -479,9 +477,9 @@ const AreaDashboardPage = ({ onLogout }) => {
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">മാസിക സർവേകൾ</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">ഏരിയ സർവേകൾ</h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    Total: {totalSurveys} monthly surveys from units in this area
+                    Total: {totalSurveys} area surveys submitted
                   </p>
                 </div>
                 <button
@@ -489,20 +487,20 @@ const AreaDashboardPage = ({ onLogout }) => {
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
                 >
                   <FileText className="w-4 h-4" />
-                  <span>Create Monthly Survey</span>
+                  <span>Create Area Survey</span>
                 </button>
               </div>
 
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-                  <span className="ml-2 text-gray-600">Loading monthly surveys...</span>
+                  <span className="ml-2 text-gray-600">Loading area surveys...</span>
                 </div>
               ) : filteredSurveys.length === 0 ? (
                 <div className="text-center py-12">
                   <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No monthly surveys found</h3>
-                  <p className="text-gray-600">No monthly surveys found for this area.</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No area surveys found</h3>
+                  <p className="text-gray-600">No area surveys found for this area.</p>
                 </div>
               ) : (
                 <>
@@ -511,14 +509,15 @@ const AreaDashboardPage = ({ onLogout }) => {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Unit
+                            District
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Area
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Month
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Submitted By
-                          </th>
+                          
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Submitted At
                           </th>
@@ -531,16 +530,17 @@ const AreaDashboardPage = ({ onLogout }) => {
                         {filteredSurveys.map((survey) => (
                           <tr key={survey._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {survey.unitName || survey.unitId || 'Unknown Unit'}
+                              {survey.district || 'Unknown District'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {survey.area || 'Unknown Area'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 {survey.month}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {survey.submittedBy}
-                            </td>
+                           
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(survey.submittedAt).toLocaleDateString()}
                             </td>
@@ -914,8 +914,8 @@ const AreaDashboardPage = ({ onLogout }) => {
           setSurveyToDelete(null);
         }}
         onConfirm={confirmDelete}
-        title="Delete Monthly Survey"
-        message={`Are you sure you want to delete the monthly survey for ${surveyToDelete?.month}? This action cannot be undone.`}
+        title="Delete Area Survey"
+        message={`Are you sure you want to delete the area survey for ${surveyToDelete?.month}? This action cannot be undone.`}
         confirmText="Delete"
         confirmColor="red"
       />

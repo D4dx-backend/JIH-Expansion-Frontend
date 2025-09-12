@@ -174,7 +174,7 @@ const LandingPage = ({ onLoginSuccess }) => {
           accessCode: accessCode
         });
         localStorage.setItem('userToken', response.data.token);
-        localStorage.setItem('userData', JSON.stringify({ ...response.data.user, role: 'district', districtId: selectedDistrict }));
+        localStorage.setItem('userData', JSON.stringify({ ...response.data.user, role: 'district', districtId: selectedDistrict, district: districtName }));
         onLoginSuccess?.(); // Call before navigation
         navigate(`/district-dashboard/${encodeURIComponent(selectedDistrict)}`);
       } else if (mode === 'area') {

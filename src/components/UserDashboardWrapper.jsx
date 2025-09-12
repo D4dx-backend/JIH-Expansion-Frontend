@@ -86,7 +86,14 @@ const UserDashboardWrapper = ({ onLogout }) => {
   // Monthly survey handlers
   const handleCreateMonthlySurvey = () => {
     setEditingSurvey(null);
-    setCurrentView('monthly-form');
+    // Check user role to determine which form to show
+    if (userData?.role === 'district') {
+      // For district users, navigate to the new district survey form
+      window.location.href = '/district-survey';
+    } else {
+      // For other users, use the existing monthly form
+      setCurrentView('monthly-form');
+    }
   };
   
   const handleEditMonthlySurvey = (survey) => {

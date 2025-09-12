@@ -56,21 +56,33 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
       
       // Determine which endpoint to use based on user role and active tab
       if (userRole === 'district') {
-        if (activeTab === 'area') {
-          endpoint = '/api/user/monthly-surveys/area-level';
+        // District users can see all surveys in their hierarchy
+        if (activeTab === 'district') {
+          endpoint = '/api/district/surveys';
+        } else if (activeTab === 'area') {
+          endpoint = '/api/area/surveys';
         } else if (activeTab === 'unit') {
-          endpoint = '/api/user/monthly-surveys/unit-level';
+          endpoint = '/api/unit/unit-surveys';
         } else {
-          // For 'all' and 'district' tabs, use the hierarchical endpoint
+          // For 'all' tab, show all surveys from hierarchy
           endpoint = '/api/user/monthly-surveys/district-hierarchy';
-          if (activeTab !== 'all') params.append('submissionLevel', activeTab);
         }
+      } else if (userRole === 'area') {
+        // Area users see area surveys
+        endpoint = '/api/area/surveys';
+      } else if (userRole === 'unit') {
+        // Unit users see unit surveys
+        endpoint = '/api/unit/unit-surveys';
       } else {
-        // For area and unit users, use the hierarchical endpoint
+        // Fallback to old endpoint for other cases
         endpoint = '/api/user/monthly-surveys/district-hierarchy';
         if (activeTab !== 'all') params.append('submissionLevel', activeTab);
       }
 
+      console.log('Fetching surveys from endpoint:', endpoint);
+      console.log('With params:', params.toString());
+      console.log('Full URL:', `${import.meta.env.VITE_API_URL}${endpoint}?${params}`);
+      
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}${endpoint}?${params}`,
         {
@@ -78,9 +90,18 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
         }
       );
       
-      setSurveys(response.data.surveys || []);
-      setTotalPages(response.data.totalPages || 1);
-      setTotalSurveys(response.data.totalSurveys || 0);
+      console.log('API Response:', response.data);
+      
+      // Handle different response formats
+      if (response.data.success) {
+        setSurveys(response.data.data || []);
+        setTotalPages(response.data.totalPages || 1);
+        setTotalSurveys(response.data.totalSurveys || (response.data.data ? response.data.data.length : 0));
+      } else {
+        setSurveys(response.data.surveys || []);
+        setTotalPages(response.data.totalPages || 1);
+        setTotalSurveys(response.data.totalSurveys || 0);
+      }
     } catch (error) {
       console.error('Error fetching monthly surveys:', error);
       setError('Failed to load monthly surveys');
@@ -94,8 +115,20 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
 
     try {
       const token = localStorage.getItem('userToken');
+      // Use different endpoints based on user role
+      let deleteEndpoint = '';
+      if (userRole === 'district') {
+        deleteEndpoint = `/api/district/surveys/${surveyToDelete._id}`;
+      } else if (userRole === 'area') {
+        deleteEndpoint = `/api/area/surveys/${surveyToDelete._id}`;
+      } else if (userRole === 'unit') {
+        deleteEndpoint = `/api/unit/unit-survey/${surveyToDelete._id}`;
+      } else {
+        deleteEndpoint = `/api/user/monthly-survey/${surveyToDelete._id}`;
+      }
+      
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/user/monthly-survey/${surveyToDelete._id}`,
+        `${import.meta.env.VITE_API_URL}${deleteEndpoint}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -175,9 +208,9 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
 
   // Group surveys by submission level for stats
   const surveyStats = {
-    district: surveys.filter(s => s.submissionLevel === 'district').length,
-    area: surveys.filter(s => s.submissionLevel === 'area').length,
-    unit: surveys.filter(s => s.submissionLevel === 'unit').length,
+    district: surveys.filter(s => s.submissionLevel === 'district' || (userRole === 'district' && activeTab === 'district')).length,
+    area: surveys.filter(s => s.submissionLevel === 'area' || (userRole === 'district' && activeTab === 'area')).length,
+    unit: surveys.filter(s => s.submissionLevel === 'unit' || (userRole === 'district' && activeTab === 'unit')).length,
     total: surveys.length
   };
 
@@ -420,23 +453,23 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                       <tr key={survey._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSubmissionLevelColor(survey.submissionLevel)} mr-2`}>
-                              {getSubmissionLevelIcon(survey.submissionLevel)}
-                              <span className="ml-1 capitalize">{survey.submissionLevel}</span>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSubmissionLevelColor(survey.submissionLevel || activeTab)} mr-2`}>
+                              {getSubmissionLevelIcon(survey.submissionLevel || activeTab)}
+                              <span className="ml-1 capitalize">{survey.submissionLevel || activeTab}</span>
                             </span>
                           </div>
                           <div className="text-sm text-gray-900 mt-1">
-                            {survey.submissionLevel === 'district' && survey.district}
-                            {survey.submissionLevel === 'area' && (
+                            {(survey.submissionLevel === 'district' || activeTab === 'district') && survey.district}
+                            {(survey.submissionLevel === 'area' || activeTab === 'area') && (
                               <div>
-                                <div className="font-medium">{survey.areaName || 'Unknown Area'}</div>
+                                <div className="font-medium">{survey.areaName || survey.area || 'Unknown Area'}</div>
                                 <div className="text-xs text-gray-500">{survey.district}</div>
                               </div>
                             )}
-                            {survey.submissionLevel === 'unit' && (
+                            {(survey.submissionLevel === 'unit' || activeTab === 'unit') && (
                               <div>
-                                <div className="font-medium">{survey.unitName || 'Unknown Unit'}</div>
-                                <div className="text-xs text-gray-500">{survey.areaName} • {survey.district}</div>
+                                <div className="font-medium">{survey.unitName || survey.unit || 'Unknown Unit'}</div>
+                                <div className="text-xs text-gray-500">{survey.areaName || survey.area} • {survey.district}</div>
                               </div>
                             )}
                           </div>
