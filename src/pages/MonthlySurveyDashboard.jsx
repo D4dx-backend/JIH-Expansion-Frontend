@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Edit, Trash2, Calendar, Search, Filter, FileText, Users, Building } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Calendar, Search, Filter, FileText, Users, Building, Eye } from 'lucide-react';
 import axios from 'axios';
 import ConfirmationModal from '../components/ConfirmationModal';
 import jihLogo from '../assets/jih-logo2.png';
@@ -21,14 +21,18 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
   // Modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [surveyToDelete, setSurveyToDelete] = useState(null);
+  
+  // View state
+  const [showDetailView, setShowDetailView] = useState(false);
+  const [viewingSurvey, setViewingSurvey] = useState(null);
 
   // Since user is always district admin, set permissions accordingly
   const userRole = 'district'; // Always district admin
   
   // District admins can create, edit, and delete surveys
-  const canCreate = levelFilter === 'district' || levelFilter === ''; // Can create district-level surveys
-  const canEdit = true; // District admins can edit all surveys
-  const canDelete = true; // District admins can delete all surveys
+  const canCreate = levelFilter === 'district'; // Can only create when district level is selected
+  const canEdit = levelFilter !== ''; // Can edit only when a specific level is selected (not "All Levels")
+  const canDelete = levelFilter !== ''; // Can delete only when a specific level is selected (not "All Levels")
   
   // Debug logging to help identify role issues
   console.log('MonthlySurveyDashboard - userData:', userData);
@@ -127,9 +131,8 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
   };
 
   const handleViewSurvey = (survey) => {
-    // For now, we'll use the same edit function but in view-only mode
-    // You can create a separate view component if needed
-    onEdit(survey);
+    setViewingSurvey(survey);
+    setShowDetailView(true);
   };
 
   const handleEditSurvey = (survey) => {
@@ -157,6 +160,255 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-GB');
   };
+
+  // Render functions for complete survey details
+  const renderPartA = (partA) => (
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">Part A - Total Components</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="text-center p-4 bg-blue-50 rounded-lg">
+          <div className="text-3xl font-bold text-blue-600 mb-2">{partA.totalPopulation?.toLocaleString() || 0}</div>
+          <div className="text-sm text-gray-600 font-medium">Total Population</div>
+        </div>
+        <div className="text-center p-4 bg-green-50 rounded-lg">
+          <div className="text-3xl font-bold text-green-600 mb-2">{partA.totalWorkers?.toLocaleString() || 0}</div>
+          <div className="text-sm text-gray-600 font-medium">Total Workers</div>
+        </div>
+        <div className="text-center p-4 bg-purple-50 rounded-lg">
+          <div className="text-3xl font-bold text-purple-600 mb-2">{partA.totalComponents?.toLocaleString() || 0}</div>
+          <div className="text-sm text-gray-600 font-medium">Total Components</div>
+        </div>
+      </div>
+
+      {/* Additional Part A details */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h4 className="text-md font-medium text-gray-900 mb-3">Population Details</h4>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Muslim Population:</span>
+              <span className="font-medium">{partA.muslimPopulation?.toLocaleString() || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Muslim Percentage:</span>
+              <span className="font-medium">{partA.muslimPercentage || 'N/A'}%</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h4 className="text-md font-medium text-gray-900 mb-3">Institution Details</h4>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Total Institutions:</span>
+              <span className="font-medium">{partA.totalInstitutions?.toLocaleString() || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Schools:</span>
+              <span className="font-medium">{partA.schools?.toLocaleString() || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Madrasas:</span>
+              <span className="font-medium">{partA.madrasas?.toLocaleString() || 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPartB = (partB) => (
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">Part B - Expansion Activities</h3>
+      
+      <div className="space-y-6">
+        {/* Monthly Meeting Status */}
+        <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <span className="text-sm font-medium text-gray-700">Monthly Meeting</span>
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+            partB.monthlyMeeting === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+          }`}>
+            {partB.monthlyMeeting || 'No'}
+          </span>
+        </div>
+
+        {/* Wing Attendance */}
+        {partB.wingAttendance && (
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-4">Wing Attendance</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {Object.entries(partB.wingAttendance).map(([wing, count]) => (
+                <div key={wing} className="text-center p-3 bg-gray-50 rounded-lg">
+                  <div className="text-lg font-bold text-gray-900">{count || 0}</div>
+                  <div className="text-xs text-gray-600 capitalize">{wing}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Other Part B details */}
+        {partB.activities && (
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-4">Activities</h4>
+            <div className="space-y-2">
+              {partB.activities.map((activity, index) => (
+                <div key={index} className="flex items-start space-x-3 py-2">
+                  <span className="text-sm font-medium text-gray-500 mt-0.5">{index + 1}.</span>
+                  <p className="text-sm text-gray-900">{activity}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderPartC = (partC) => {
+    const activityLabels = {
+      newAreaWorkshop: 'New Area Workshop',
+      workerTraining: 'Worker Training',
+      newAreaAgenda: 'New Area Agenda Preparation',
+      fulltimeRecruitment: 'Full-time Recruitment',
+      schoolGuardianCluster: 'School Guardian Cluster Formation',
+      reliefDataCollection: 'Relief Beneficiary Data Collection',
+      workerDeployment: 'Worker Deployment to New Areas',
+      weeklyMeetingEffectiveness: 'Weekly Meeting Effectiveness',
+      hajjUmrahGroup: 'Hajj/Umrah Group Members',
+      artsScienceCampus: 'Arts & Science Campus Activities',
+      madrasaGrowthCalculation: 'Madrasa Growth Calculation',
+      schoolCenteredWork: 'School-centered Work',
+      staffHalkaFormation: 'Staff Halka Formation',
+      islamicCollegeAlumni: 'Islamic College Alumni',
+      quranStudyCenterWork: 'Quran Study Center Work'
+    };
+
+    const selectedActivities = Object.entries(partC.expansionActivities || {})
+      .filter(([key, value]) => value)
+      .map(([key]) => ({ key, label: activityLabels[key] || key }));
+
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Part C - Focus Areas</h3>
+        
+        {selectedActivities.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {selectedActivities.map(({ key, label }) => (
+              <div key={key} className="flex items-center space-x-3 py-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm text-gray-900">{label}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">No focus areas selected</p>
+        )}
+      </div>
+    );
+  };
+
+  const renderPartD = (partD) => (
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">Part D - Team Activities</h3>
+      
+      {partD.activities && partD.activities.length > 0 ? (
+        <div className="space-y-3">
+          {partD.activities.map((activity, index) => (
+            <div key={index} className="flex items-start space-x-3 py-2">
+              <span className="text-sm font-medium text-gray-500 mt-0.5">{index + 1}.</span>
+              <p className="text-sm text-gray-900">{activity}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-500">No team activities recorded</p>
+      )}
+    </div>
+  );
+
+  const renderPartE = (partE) => {
+    const categoryLabels = {
+      personalConnection: 'Personal Connection',
+      literaryConnection: 'Literary Connection',
+      qscStudent: 'QSC Student',
+      regularKhutbaListener: 'Regular Khutba Listener',
+      prabodhanamReader: 'Prabodhanam Reader',
+      jaBeneficiary: 'JA Beneficiary',
+      adaBeneficiary: 'ADA Beneficiary',
+      localReliefBeneficiary: 'Local Relief Beneficiary',
+      aaramamReader: 'Aaramam Reader',
+      thawheedulMaraStudent: 'Thawheedul Mara Student',
+      madrasaAlumni: 'Madrasa Alumni',
+      islamicCollegeAlumni: 'Islamic College Alumni',
+      neighborhoodMember: 'Neighborhood Member',
+      palliativeConnection: 'Palliative Connection',
+      friendsClubMember: 'Friends Club Member',
+      mediaReader: 'Media Reader',
+      ayahDarsQuranStudent: 'Ayah Dars Quran Student',
+      heavenGuardian: 'Heaven Guardian',
+      schoolGuardian: 'School Guardian',
+      arabicCollegeGuardian: 'Arabic College Guardian',
+      arabicCollegeStudent: 'Arabic College Student',
+      artsCollegeStudent: 'Arts College Student',
+      artsCollegeGuardian: 'Arts College Guardian',
+      publicCampusStudent: 'Public Campus Student',
+      otherNGOs: 'Other NGOs',
+      mahallConnection: 'Mahall Connection'
+    };
+
+    const connections = Object.entries(partE.connections || {})
+      .filter(([key, value]) => value && value > 0)
+      .map(([key, value]) => ({ key, value, label: categoryLabels[key] || key }));
+
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Part E - Connections</h3>
+        
+        {connections.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {connections.map(({ key, value, label }) => (
+              <div key={key} className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-900">{label}</span>
+                <span className="text-sm font-medium text-blue-600">{value}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">No connections recorded</p>
+        )}
+      </div>
+    );
+  };
+
+  const renderPartF = (partF) => (
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">Part F - Additional Information</h3>
+      
+      <div className="space-y-4">
+        {partF.notes && (
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Notes</h4>
+            <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">{partF.notes}</p>
+          </div>
+        )}
+        
+        {partF.challenges && (
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Challenges</h4>
+            <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">{partF.challenges}</p>
+          </div>
+        )}
+
+        {partF.recommendations && (
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Recommendations</h4>
+            <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">{partF.recommendations}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   const getSubmissionLevelIcon = (level) => {
     switch (level) {
@@ -203,6 +455,110 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
   };
 
   // Removed getAvailableTabs function since we're not using tabs anymore
+
+  // Render detail view if showing survey details
+  if (showDetailView && viewingSurvey) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row justify-between items-center py-4 sm:py-6 gap-4">
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => {
+                    setShowDetailView(false);
+                    setViewingSurvey(null);
+                  }}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 text-sm"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+                <img src={jihLogo} alt="JIH Logo" className="h-8 sm:h-12 w-auto" />
+                <div>
+                  <h1 className="text-lg sm:text-2xl font-bold text-gray-900">Survey Details</h1>
+                  <p className="text-sm text-gray-600">
+                    {viewingSurvey.month} - {viewingSurvey.submissionLevel} Level
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Survey Info Card */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">District</p>
+                <p className="text-sm font-medium text-gray-900">{viewingSurvey.district || 'Unknown'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Level</p>
+                <p className="text-sm font-medium text-gray-900 capitalize">{viewingSurvey.submissionLevel || 'Unknown'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Month</p>
+                <p className="text-sm font-medium text-gray-900">{viewingSurvey.month || 'Unknown'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Submitted</p>
+                <p className="text-sm font-medium text-gray-900">{formatDate(viewingSurvey.submittedAt)}</p>
+              </div>
+            </div>
+            {viewingSurvey.areaName && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-500 mb-1">Area</p>
+                <p className="text-sm font-medium text-gray-900">{viewingSurvey.areaName}</p>
+              </div>
+            )}
+            {viewingSurvey.unitName && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-500 mb-1">Unit</p>
+                <p className="text-sm font-medium text-gray-900">{viewingSurvey.unitName}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Complete Survey Details */}
+          <div className="space-y-6">
+            {viewingSurvey.partA && renderPartA(viewingSurvey.partA)}
+            {viewingSurvey.partB && renderPartB(viewingSurvey.partB)}
+            {viewingSurvey.partC && renderPartC(viewingSurvey.partC)}
+            {viewingSurvey.partD && renderPartD(viewingSurvey.partD)}
+            {viewingSurvey.partE && renderPartE(viewingSurvey.partE)}
+            {viewingSurvey.partF && renderPartF(viewingSurvey.partF)}
+          </div>
+
+          {/* Survey Metadata */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Survey Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Submitted By</p>
+                <p className="text-sm font-medium text-gray-900">{viewingSurvey.submittedByName || viewingSurvey.submittedBy || 'Unknown'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Survey ID</p>
+                <p className="text-sm font-medium text-gray-900 font-mono">{viewingSurvey._id}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Submission Level</p>
+                <p className="text-sm font-medium text-gray-900 capitalize">{viewingSurvey.submissionLevel || 'Unknown'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Submission Date</p>
+                <p className="text-sm font-medium text-gray-900">{formatDate(viewingSurvey.submittedAt)}</p>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -384,7 +740,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                             )}
                             {survey.submissionLevel === 'unit' && (
                               <div>
-                                <div className="font-medium">{survey.unitName || survey.unit || 'Unknown Unit'}</div>
+                                <div className="font-medium">{survey.unitName || survey.component || 'Unknown Unit'}</div>
                                 <div className="text-xs text-gray-500">{survey.areaName || survey.area} • {survey.district}</div>
                               </div>
                             )}
@@ -408,10 +764,10 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleEditSurvey(survey)}
-                              className="text-green-600 hover:text-green-900"
+                              className={canEdit ? "text-green-600 hover:text-green-900" : "text-blue-600 hover:text-blue-900"}
                               title={canEdit ? "Edit" : "View"}
                             >
-                              <Edit className="w-4 h-4" />
+                              {canEdit ? <Edit className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
                             {canDelete && (
                               <button

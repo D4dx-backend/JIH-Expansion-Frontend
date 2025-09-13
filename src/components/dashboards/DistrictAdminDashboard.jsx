@@ -120,6 +120,25 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
     { name: 'Others', value: stats.yearly.totalWorkers * 0.1 }
   ] : [];
 
+  // Monthly surveys by level data
+  const monthlyByLevelData = [
+    {
+      name: 'District',
+      surveys: stats.monthly?.districtCount || 0,
+      workers: stats.monthly?.districtWorkers || 0
+    },
+    {
+      name: 'Area',
+      surveys: stats.monthly?.areaCount || 0,
+      workers: stats.monthly?.areaWorkers || 0
+    },
+    {
+      name: 'Unit',
+      surveys: stats.monthly?.unitCount || 0,
+      workers: stats.monthly?.unitWorkers || 0
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -167,9 +186,9 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatisticsCard
-            title="Total Workers"
+            title="Total Workers (Yearly)"
             value={(stats.yearly?.totalWorkers || 0).toLocaleString()}
-            subtitle="From last yearly survey"
+            subtitle={`From ${stats.yearly?.year || 'previous'} yearly survey`}
             icon={Users}
             color="blue"
           />
@@ -190,23 +209,37 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
           <StatisticsCard
             title="Monthly Surveys This Year"
             value={(stats.monthly?.count || 0).toLocaleString()}
-            subtitle="How many months reported"
+            subtitle="All levels combined"
             icon={TrendingUp}
             color="yellow"
+          />
+          <StatisticsCard
+            title="District Monthly Surveys"
+            value={(stats.monthly?.districtCount || 0).toLocaleString()}
+            subtitle={`${(stats.monthly?.districtWorkers || 0).toLocaleString()} workers`}
+            icon={Building}
+            color="blue"
+          />
+          <StatisticsCard
+            title="Area Monthly Surveys"
+            value={(stats.monthly?.areaCount || 0).toLocaleString()}
+            subtitle={`${(stats.monthly?.areaWorkers || 0).toLocaleString()} workers`}
+            icon={MapPin}
+            color="green"
+          />
+          <StatisticsCard
+            title="Unit Monthly Surveys"
+            value={(stats.monthly?.unitCount || 0).toLocaleString()}
+            subtitle={`${(stats.monthly?.unitWorkers || 0).toLocaleString()} workers`}
+            icon={Users}
+            color="purple"
           />
           <StatisticsCard
             title="Total Areas"
             value={areaCount}
             subtitle="Under this district"
             icon={MapPin}
-            color="blue"
-          />
-          <StatisticsCard
-            title="Total Units"
-            value={unitCount}
-            subtitle="Across all areas"
-            icon={MapPin}
-            color="green"
+            color="orange"
           />
         </div>
 
@@ -259,6 +292,38 @@ const DistrictAdminDashboard = ({ adminId, onBack }) => {
             label1="Workers"
             label2="Units"
           />
+        )}
+
+        {/* Monthly Surveys by Level */}
+        {monthlyByLevelData.some(level => level.surveys > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SurveyBarChart
+              data={monthlyByLevelData}
+              title="Monthly Surveys by Level"
+              dataKey1="surveys"
+              dataKey2="workers"
+              label1="Surveys"
+              label2="Workers"
+            />
+            
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Survey Breakdown</h3>
+              <div className="space-y-4">
+                {monthlyByLevelData.map((level, index) => (
+                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <div className="font-medium text-gray-900">{level.name} Level</div>
+                      <div className="text-sm text-gray-600">{level.surveys} surveys submitted</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-semibold text-blue-600">{level.workers.toLocaleString()}</div>
+                      <div className="text-xs text-gray-500">workers</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* District Information */}
