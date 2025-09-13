@@ -10,6 +10,12 @@ const UnitSurveyPage = ({ onBack, editingSurvey = null }) => {
   const { unitId } = useParams();
   const navigate = useNavigate();
   
+  // Debug: Log component props
+  console.log('=== UnitSurveyPage RENDER ===');
+  console.log('editingSurvey prop:', editingSurvey);
+  console.log('editingSurvey type:', typeof editingSurvey);
+  console.log('=== END UnitSurveyPage RENDER DEBUG ===');
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     district: '',
@@ -112,6 +118,15 @@ const UnitSurveyPage = ({ onBack, editingSurvey = null }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Debug: Monitor success state changes
+  useEffect(() => {
+    console.log('=== SUCCESS STATE CHANGED ===');
+    console.log('New success state:', success);
+    console.log('Success state type:', typeof success);
+    console.log('Success state length:', success?.length);
+    console.log('=== END SUCCESS STATE MONITOR ===');
+  }, [success]);
+
   useEffect(() => {
     // Auto-fill month
     const currentDate = new Date();
@@ -125,10 +140,28 @@ const UnitSurveyPage = ({ onBack, editingSurvey = null }) => {
 
     // Load editing survey data if provided
     if (editingSurvey) {
-      setFormData(prev => ({
-        ...prev,
-        ...editingSurvey
-      }));
+      console.log('=== UnitSurveyPage: Loading editing survey ===');
+      console.log('editingSurvey:', editingSurvey);
+      console.log('editingSurvey._id:', editingSurvey._id);
+      console.log('editingSurvey keys:', Object.keys(editingSurvey));
+      console.log('=== END UnitSurveyPage editing survey debug ===');
+      
+      setFormData(prev => {
+        const newFormData = {
+          ...prev,
+          ...editingSurvey
+        };
+        console.log('=== Setting formData for editing ===');
+        console.log('Previous formData:', prev);
+        console.log('Editing survey:', editingSurvey);
+        console.log('Editing survey partA:', editingSurvey.partA);
+        console.log('Editing survey spokenPersons:', editingSurvey.partA?.spokenPersons);
+        console.log('New formData:', newFormData);
+        console.log('New formData partA:', newFormData.partA);
+        console.log('New formData spokenPersons:', newFormData.partA?.spokenPersons);
+        console.log('=== END setting formData debug ===');
+        return newFormData;
+      });
     }
   }, [editingSurvey]);
 
@@ -196,10 +229,18 @@ const UnitSurveyPage = ({ onBack, editingSurvey = null }) => {
       const headers = { Authorization: `Bearer ${token}` };
 
       // Ensure proper data structure before submission
+      const currentDate = new Date();
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      
       const submitData = {
         ...formData,
-        month: formData.month,
-        year: formData.year,
+        month: formData.month || monthNames[currentDate.getMonth()],
+        year: formData.year || currentDate.getFullYear(),
+        // Ensure required fields are present
+        district: formData.district || '',
+        area: formData.area || '',
+        component: formData.component || '',
         // Ensure partA has proper structure
         partA: {
           codes: formData.partA?.codes || '',
@@ -234,6 +275,10 @@ const UnitSurveyPage = ({ onBack, editingSurvey = null }) => {
       // Debug: Log the data being submitted
       console.log('=== SUBMISSION DEBUG ===');
       console.log('Full formData:', formData);
+      console.log('formData.month:', formData.month);
+      console.log('formData.year:', formData.year);
+      console.log('submitData.month:', submitData.month);
+      console.log('submitData.year:', submitData.year);
       console.log('Full submitData:', submitData);
       console.log('partA:', submitData.partA);
       console.log('partA.spokenPersons:', submitData.partA?.spokenPersons);
@@ -244,33 +289,71 @@ const UnitSurveyPage = ({ onBack, editingSurvey = null }) => {
       console.log('partC.growthAcceleration type:', typeof submitData.partC?.growthAcceleration);
       console.log('=== END DEBUG ===');
 
+      // Debug: Log editing survey info
+      console.log('=== EDIT SUBMISSION DEBUG ===');
+      console.log('editingSurvey:', editingSurvey);
+      console.log('editingSurvey._id:', editingSurvey?._id);
+      console.log('submitData:', submitData);
+      console.log('=== END EDIT DEBUG ===');
+
       let response;
-      if (editingSurvey) {
+      if (editingSurvey && editingSurvey._id) {
         // Update existing survey
-        response = await axios.put(
-          `${import.meta.env.VITE_API_URL}/api/unit-admin/unit-survey/${editingSurvey._id}`,
-          submitData,
-          { headers }
-        );
+        console.log('Updating existing survey with ID:', editingSurvey._id);
+        console.log('PUT URL:', `${import.meta.env.VITE_API_URL}/api/unit/unit-survey/${editingSurvey._id}`);
+        console.log('Headers:', headers);
+        console.log('Submit Data:', submitData);
+        
+        try {
+          response = await axios.put(
+            `${import.meta.env.VITE_API_URL}/api/unit/unit-survey/${editingSurvey._id}`,
+            submitData,
+            { headers }
+          );
+          console.log('PUT response:', response);
+        } catch (putError) {
+          console.error('PUT request failed:', putError);
+          console.error('PUT error response:', putError.response);
+          throw putError;
+        }
       } else {
         // Create new survey
+        console.log('Creating new survey');
         response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/unit-admin/unit-survey`,
+          `${import.meta.env.VITE_API_URL}/api/unit/unit-survey`,
           submitData,
           { headers }
         );
       }
 
-      setSuccess(editingSurvey ? 'Unit survey updated successfully!' : 'Unit survey submitted successfully!');
+      const successMessage = editingSurvey ? 'യൂണിറ്റ് സർവേ വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു!' : 'യൂണിറ്റ് സർവേ വിജയകരമായി സബ്മിറ്റ് ചെയ്തു!';
       
-      // Redirect after a short delay
+      console.log('=== SUCCESS MESSAGE SET ===');
+      console.log('Success message:', successMessage);
+      console.log('Editing survey:', editingSurvey);
+      console.log('=== END SUCCESS DEBUG ===');
+      
+      setSuccess(successMessage);
+      console.log('=== SUCCESS STATE SET ===');
+      console.log('Success message set to:', successMessage);
+      console.log('=== END SUCCESS STATE DEBUG ===');
+      
+      // Also show alert as backup
+      alert(successMessage);
+      
+      // Redirect after a longer delay to allow user to see the success message
       setTimeout(() => {
+        console.log('=== REDIRECTING AFTER SUCCESS ===');
+        console.log('onBack function exists:', !!onBack);
+        console.log('unitId:', unitId);
+        console.log('=== END REDIRECT DEBUG ===');
+        
         if (onBack) {
           onBack();
         } else {
           navigate(`/unit/${unitId}`);
         }
-      }, 2000);
+      }, 3000);
 
     } catch (error) {
       console.error('Survey submission error:', error);
@@ -281,6 +364,12 @@ const UnitSurveyPage = ({ onBack, editingSurvey = null }) => {
   };
 
   const renderCurrentStep = () => {
+    console.log('=== renderCurrentStep DEBUG ===');
+    console.log('currentStep:', currentStep);
+    console.log('formData:', formData);
+    console.log('editingSurvey:', editingSurvey);
+    console.log('=== END renderCurrentStep DEBUG ===');
+    
     switch (currentStep) {
       case 1:
         return (
@@ -422,10 +511,20 @@ const UnitSurveyPage = ({ onBack, editingSurvey = null }) => {
         )}
 
         {success && (
-          <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center space-x-2">
-              <Check className="w-5 h-5 text-green-600" />
-              <p className="text-green-600 text-sm">{success}</p>
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999]" style={{zIndex: 9999}}>
+            {/* Debug: Log success modal rendering */}
+            {console.log('=== SUCCESS MODAL RENDERING ===', success)}
+            <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md mx-4 border-4 border-green-500">
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6">
+                  <Check className="h-10 w-10 text-green-600" />
+                </div>
+                <p className="text-xl text-green-700 font-semibold mb-6">{success}</p>
+                <p className="text-sm text-gray-600 mb-6">കുറച്ച് സെക്കൻഡുകൾക്കുള്ളിൽ ഡാഷ്ബോർഡിലേക്ക് തിരിച്ചുപോകും...</p>
+                <div className="flex justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-4 border-green-600"></div>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -436,7 +535,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey = null }) => {
             <div className="bg-white rounded-lg p-6 flex items-center space-x-3">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               <span className="text-gray-700">
-                {editingSurvey ? 'Updating survey...' : 'Submitting survey...'}
+                {editingSurvey ? 'സർവേ അപ്ഡേറ്റ് ചെയ്യുന്നു...' : 'സർവേ സബ്മിറ്റ് ചെയ്യുന്നു...'}
               </span>
             </div>
           </div>

@@ -8,7 +8,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
   const [surveys, setSurveys] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'district', 'areas', 'units'
+  // Remove activeTab since we're using filters instead
   
   // Filtering and search
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,24 +22,23 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [surveyToDelete, setSurveyToDelete] = useState(null);
 
-  // Determine user role and permissions
-  const userRole = userData?.role; // 'district', 'area', 'unit'
+  // Since user is always district admin, set permissions accordingly
+  const userRole = 'district'; // Always district admin
   
-  // District admins can only create district-level surveys
-  // Area and unit users cannot create surveys
-  const canCreate = userRole === 'district' && activeTab === 'district';
-  const canEdit = userRole === 'district'; // Only district admins can edit
-  const canDelete = userRole === 'district'; // Only district admins can delete
+  // District admins can create, edit, and delete surveys
+  const canCreate = levelFilter === 'district' || levelFilter === ''; // Can create district-level surveys
+  const canEdit = true; // District admins can edit all surveys
+  const canDelete = true; // District admins can delete all surveys
   
   // Debug logging to help identify role issues
   console.log('MonthlySurveyDashboard - userData:', userData);
   console.log('MonthlySurveyDashboard - userRole:', userRole);
-  console.log('MonthlySurveyDashboard - activeTab:', activeTab);
+  console.log('MonthlySurveyDashboard - levelFilter:', levelFilter);
   console.log('MonthlySurveyDashboard - canCreate:', canCreate);
 
   useEffect(() => {
     fetchSurveys();
-  }, [currentPage, levelFilter, monthFilter, activeTab]);
+  }, [currentPage, levelFilter, monthFilter]);
 
   const fetchSurveys = async () => {
     try {
@@ -54,29 +53,12 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
 
       let endpoint = '';
       
-      // Determine which endpoint to use based on user role and active tab
-      if (userRole === 'district') {
-        // District users can see all surveys in their hierarchy
-        if (activeTab === 'district') {
-          endpoint = '/api/district/surveys';
-        } else if (activeTab === 'area') {
-          endpoint = '/api/area/surveys';
-        } else if (activeTab === 'unit') {
-          endpoint = '/api/unit/unit-surveys';
-        } else {
-          // For 'all' tab, show all surveys from hierarchy
-          endpoint = '/api/user/monthly-surveys/district-hierarchy';
-        }
-      } else if (userRole === 'area') {
-        // Area users see area surveys
-        endpoint = '/api/area/surveys';
-      } else if (userRole === 'unit') {
-        // Unit users see unit surveys
-        endpoint = '/api/unit/unit-surveys';
-      } else {
-        // Fallback to old endpoint for other cases
-        endpoint = '/api/user/monthly-surveys/district-hierarchy';
-        if (activeTab !== 'all') params.append('submissionLevel', activeTab);
+      // Always use the "all" endpoint since we're filtering by level
+      endpoint = '/api/user/monthly-surveys/all';
+      
+      // Add level filter to params if specified
+      if (levelFilter) {
+        params.append('level', levelFilter);
       }
 
       console.log('Fetching surveys from endpoint:', endpoint);
@@ -93,15 +75,11 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
       console.log('API Response:', response.data);
       
       // Handle different response formats
-      if (response.data.success) {
-        setSurveys(response.data.data || []);
-        setTotalPages(response.data.totalPages || 1);
-        setTotalSurveys(response.data.totalSurveys || (response.data.data ? response.data.data.length : 0));
-      } else {
-        setSurveys(response.data.surveys || []);
-        setTotalPages(response.data.totalPages || 1);
-        setTotalSurveys(response.data.totalSurveys || 0);
-      }
+      setSurveys(response.data.surveys || response.data.data || []);
+      setTotalPages(response.data.totalPages || 1);
+      setTotalSurveys(response.data.totalSurveys || 0);
+      
+      // Survey stats are calculated locally from the surveys array
     } catch (error) {
       console.error('Error fetching monthly surveys:', error);
       setError('Failed to load monthly surveys');
@@ -201,6 +179,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
   const filteredSurveys = surveys.filter(survey => 
     survey.district?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     survey.submittedBy?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    survey.submittedByName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     survey.areaName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     survey.unitName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     survey.month?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -208,56 +187,22 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
 
   // Group surveys by submission level for stats
   const surveyStats = {
-    district: surveys.filter(s => s.submissionLevel === 'district' || (userRole === 'district' && activeTab === 'district')).length,
-    area: surveys.filter(s => s.submissionLevel === 'area' || (userRole === 'district' && activeTab === 'area')).length,
-    unit: surveys.filter(s => s.submissionLevel === 'unit' || (userRole === 'district' && activeTab === 'unit')).length,
+    district: surveys.filter(s => s.submissionLevel === 'district').length,
+    area: surveys.filter(s => s.submissionLevel === 'area').length,
+    unit: surveys.filter(s => s.submissionLevel === 'unit').length,
     total: surveys.length
   };
 
-  // Get display title based on user role
+  // Since user is always district admin, use district-specific titles
   const getDashboardTitle = () => {
-    switch (userRole) {
-      case 'area': return 'Area Monthly Surveys';
-      case 'unit': return 'Unit Monthly Surveys';
-      case 'district': return 'Monthly Surveys Dashboard';
-      default: return 'Monthly Surveys Dashboard';
-    }
+    return 'Monthly Surveys Dashboard';
   };
 
-  // Get display subtitle based on user role
   const getDashboardSubtitle = () => {
-    switch (userRole) {
-      case 'area': return `Area: ${userData?.areaName || userData?.areaId} • District: ${userData?.district}`;
-      case 'unit': return `Unit: ${userData?.unitName || userData?.unitId} • Area: ${userData?.areaName} • District: ${userData?.district}`;
-      case 'district': return `District: ${userData?.district}`;
-      default: return `District: ${userData?.district || 'Unknown'}`;
-    }
+    return `District: ${userData?.district || 'Unknown'}`;
   };
 
-  // Determine which tabs to show based on user role
-  const getAvailableTabs = () => {
-    switch (userRole) {
-      case 'unit':
-        return [{ key: 'all', label: 'My Surveys', count: surveyStats.total }];
-      case 'area':
-        return [
-          { key: 'all', label: 'All Surveys', count: surveyStats.total },
-          { key: 'area', label: 'Area Level', count: surveyStats.area },
-          { key: 'unit', label: 'Unit Level', count: surveyStats.unit }
-        ];
-      case 'district':
-        return [
-          { key: 'all', label: 'All Surveys', count: surveyStats.total },
-          { key: 'district', label: 'District Level', count: surveyStats.district },
-          { key: 'area', label: 'Area Level', count: surveyStats.area },
-          { key: 'unit', label: 'Unit Level', count: surveyStats.unit }
-        ];
-      default: // fallback for undefined role
-        return [
-          { key: 'all', label: 'All Surveys', count: surveyStats.total }
-        ];
-    }
-  };
+  // Removed getAvailableTabs function since we're not using tabs anymore
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -292,29 +237,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
-            {getAvailableTabs().map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.key
-                    ? tab.key === 'district' ? 'border-blue-500 text-blue-600'
-                    : tab.key === 'area' ? 'border-green-500 text-green-600'
-                    : tab.key === 'unit' ? 'border-purple-500 text-purple-600'
-                    : 'border-gray-500 text-gray-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tab.label} ({tab.count})
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
+      {/* Removed tabs section - using filters instead */}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -334,21 +257,19 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                 <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
             </div>
-            {userRole === 'district' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Level</label>
-                <select
-                  value={levelFilter}
-                  onChange={(e) => setLevelFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  <option value="">All Levels</option>
-                  <option value="district">District</option>
-                  <option value="area">Area</option>
-                  <option value="unit">Unit</option>
-                </select>
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Level</label>
+              <select
+                value={levelFilter}
+                onChange={(e) => setLevelFilter(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="">All Levels</option>
+                <option value="district">District</option>
+                <option value="area">Area</option>
+                <option value="unit">Unit</option>
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Month</label>
               <select
@@ -363,7 +284,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                 ))}
               </select>
             </div>
-            <div className={`flex items-end space-x-2 ${userRole === 'district' ? 'md:col-span-2' : 'md:col-span-3'}`}>
+            <div className="flex items-end space-x-2 md:col-span-2">
               <button
                 onClick={handleSearch}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
@@ -392,10 +313,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Monthly Surveys</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Showing {filteredSurveys.length} of {totalSurveys} surveys
-              {userRole === 'district' && ' from district hierarchy'}
-              {userRole === 'area' && ' from area and units'}
-              {userRole === 'unit' && ' from unit'}
+              Showing {filteredSurveys.length} of {totalSurveys} surveys from district hierarchy
             </p>
           </div>
 
@@ -409,9 +327,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
               <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No monthly surveys found</h3>
               <p className="text-gray-600 mb-4">
-                {canCreate 
-                  ? 'No district-level surveys found. Create the first district survey.' 
-                  : 'No surveys available to view at this level.'}
+                No surveys found. Create the first district survey to get started.
               </p>
               {canCreate && (
                 <button
@@ -453,20 +369,20 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                       <tr key={survey._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSubmissionLevelColor(survey.submissionLevel || activeTab)} mr-2`}>
-                              {getSubmissionLevelIcon(survey.submissionLevel || activeTab)}
-                              <span className="ml-1 capitalize">{survey.submissionLevel || activeTab}</span>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSubmissionLevelColor(survey.submissionLevel)} mr-2`}>
+                              {getSubmissionLevelIcon(survey.submissionLevel)}
+                              <span className="ml-1 capitalize">{survey.submissionLevel}</span>
                             </span>
                           </div>
                           <div className="text-sm text-gray-900 mt-1">
-                            {(survey.submissionLevel === 'district' || activeTab === 'district') && survey.district}
-                            {(survey.submissionLevel === 'area' || activeTab === 'area') && (
+                            {survey.submissionLevel === 'district' && survey.district}
+                            {survey.submissionLevel === 'area' && (
                               <div>
                                 <div className="font-medium">{survey.areaName || survey.area || 'Unknown Area'}</div>
                                 <div className="text-xs text-gray-500">{survey.district}</div>
                               </div>
                             )}
-                            {(survey.submissionLevel === 'unit' || activeTab === 'unit') && (
+                            {survey.submissionLevel === 'unit' && (
                               <div>
                                 <div className="font-medium">{survey.unitName || survey.unit || 'Unknown Unit'}</div>
                                 <div className="text-xs text-gray-500">{survey.areaName || survey.area} • {survey.district}</div>
@@ -480,7 +396,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {survey.submittedBy}
+                          {survey.submittedByName || survey.submittedBy}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {survey.partA?.totalPopulation || 'N/A'}
@@ -558,7 +474,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
           }}
           onConfirm={handleDelete}
           title="Delete Monthly Survey"
-          message={`Are you sure you want to delete the monthly survey for ${surveyToDelete?.month} submitted by ${surveyToDelete?.submittedBy}? This action cannot be undone.`}
+          message={`Are you sure you want to delete the monthly survey for ${surveyToDelete?.month} submitted by ${surveyToDelete?.submittedByName || surveyToDelete?.submittedBy}? This action cannot be undone.`}
           confirmText="Delete"
           confirmColor="red"
         />

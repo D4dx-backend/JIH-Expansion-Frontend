@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
 
 const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
-  const [localData, setLocalData] = useState({
-    partB: {
+  // Initialize with default values and merge with formData
+  const [partBData, setPartBData] = useState({
       newJIHMembers: {
         male: '',
         female: ''
@@ -38,8 +38,9 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
         mahalluConnection: false,
         fullTimeWorkerConnection: false
       }
-    },
-    partC: {
+  });
+
+  const [partCData, setPartCData] = useState({
       growthAcceleration: {
         rukkun: '',
         karkun: '',
@@ -48,73 +49,117 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
         gio: '',
         teenIndia: '',
         malarvadi: ''
-      }
     }
   });
 
+  // Initialize data from formData when component mounts or formData changes
   useEffect(() => {
-    if (formData && Object.keys(formData).length > 0) {
-      // Only update if formData has meaningful content and is different from current localData
-      setLocalData(prev => {
-        // Check if the formData is actually different to avoid unnecessary updates
-        const hasChanges = JSON.stringify(prev) !== JSON.stringify(formData);
-        if (hasChanges) {
-          console.log('UnitPageB: Updating localData from formData:', formData);
-          return { ...prev, ...formData };
-        }
-        return prev;
-      });
+    if (formData) {
+      console.log('UnitPageB: Initializing with formData:', formData);
+      
+      // Initialize partB data
+      if (formData.partB) {
+        setPartBData(prev => ({
+          newJIHMembers: {
+            male: '',
+            female: '',
+            ...formData.partB.newJIHMembers
+          },
+          memberCategories: {
+            qscStudent: false,
+            regularKhutbaListener: false,
+            prabodhanamReader: false,
+            pfBeneficiary: false,
+            bzBeneficiary: false,
+            regionalReliefBeneficiary: false,
+            interestFreeJusticeBeneficiary: false,
+            sahitiyabandham: false,
+            aaramamReader: false,
+            tamheedulManhabStudent: false,
+            institutionAlumni: false,
+            neighborhoodGroupMember: false,
+            friendshipForumMember: false,
+            palliativeConnection: false,
+            neighborhoodGroupMember2: false,
+            friendsClubMember: false,
+            mediaReader: false,
+            ayathulDursalQuranStudent: false,
+            heavensGuardian: false,
+            schoolGuardian: false,
+            arabicCollegeGuardian: false,
+            arabicCollegeStudent: false,
+            artsCollegeStudent: false,
+            artsCollegeGuardian: false,
+            publicCampusStudent: false,
+            otherNGOs: false,
+            mahalluConnection: false,
+            fullTimeWorkerConnection: false,
+            ...formData.partB.memberCategories
+          }
+        }));
+      }
+
+      // Initialize partC data
+      if (formData.partC) {
+        setPartCData(prev => ({
+          growthAcceleration: {
+            rukkun: '',
+            karkun: '',
+            solidarity: '',
+            sio: '',
+            gio: '',
+            teenIndia: '',
+            malarvadi: '',
+            ...formData.partC.growthAcceleration
+          }
+        }));
+      }
     }
   }, [formData]);
 
-  const handleInputChange = useCallback((field, value) => {
-    setLocalData(prevData => {
-      const newData = { 
-        ...prevData,
-        partB: {
-          ...prevData.partB,
-          newJIHMembers: { ...prevData.partB.newJIHMembers },
-          memberCategories: { ...prevData.partB.memberCategories }
-        },
-        partC: {
-          ...prevData.partC,
-          growthAcceleration: { ...prevData.partC.growthAcceleration }
-        }
-      };
+  // Handle PartB input changes
+  const handlePartBInputChange = useCallback((field, value) => {
+    console.log(`PartB input change: ${field} = ${value}`);
+    setPartBData(prev => {
+      const newData = { ...prev };
       
-      if (field.includes('.')) {
-        const [parent, child] = field.split('.');
-        if (parent === 'partB') {
-          if (child.includes('.')) {
-            const [subParent, subChild] = child.split('.');
-            if (subParent === 'newJIHMembers') {
-              newData.partB.newJIHMembers[subChild] = value;
-            } else if (subParent === 'memberCategories') {
-              newData.partB.memberCategories[subChild] = value;
-            }
-          } else {
-            newData.partB[child] = value;
-          }
-        } else if (parent === 'partC') {
-          if (child.includes('.')) {
-            const [subParent, subChild] = child.split('.');
-            if (subParent === 'growthAcceleration') {
-              newData.partC.growthAcceleration[subChild] = value;
-            }
-          } else {
-            newData.partC[child] = value;
-          }
-        }
-      } else {
-        newData[field] = value;
+      if (field === 'newJIHMembers.male') {
+        newData.newJIHMembers = { ...newData.newJIHMembers, male: value };
+      } else if (field === 'newJIHMembers.female') {
+        newData.newJIHMembers = { ...newData.newJIHMembers, female: value };
+      } else if (field.startsWith('memberCategories.')) {
+        const categoryKey = field.replace('memberCategories.', '');
+        newData.memberCategories = { ...newData.memberCategories, [categoryKey]: value };
       }
       
-      // Update parent form data if callback exists
+      // Update parent form data
       if (setFormData) {
-        setFormData(prev => ({
-          ...prev,
-          partB: newData.partB,
-          partC: newData.partC
+        setFormData(prevFormData => ({
+          ...prevFormData,
+          partB: newData
+        }));
+      }
+      
+      return newData;
+    });
+  }, [setFormData]);
+
+  // Handle PartC input changes
+  const handlePartCInputChange = useCallback((field, value) => {
+    console.log(`PartC input change: ${field} = ${value}`);
+    setPartCData(prev => {
+      const newData = { ...prev };
+      
+      if (field.startsWith('growthAcceleration.')) {
+        const growthKey = field.replace('growthAcceleration.', '');
+        newData.growthAcceleration = { ...newData.growthAcceleration, [growthKey]: value };
+      }
+      
+      // Update parent form data
+      if (setFormData) {
+        setFormData(prevFormData => ({
+          ...prevFormData,
+          partC: newData
         }));
       }
       
@@ -124,25 +169,21 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
 
   // Special handler for checkboxes to ensure they work properly
   const handleCheckboxChange = useCallback((optionKey, checked) => {
-    console.log(`UnitPageB Checkbox ${optionKey} changed to:`, checked);
-    setLocalData(prevData => {
+    console.log(`Checkbox ${optionKey} changed to:`, checked);
+    setPartBData(prev => {
       const newData = {
-        ...prevData,
-        partB: {
-          ...prevData.partB,
+        ...prev,
           memberCategories: {
-            ...prevData.partB.memberCategories,
+          ...prev.memberCategories,
             [optionKey]: checked
-          }
         }
       };
       
-      // Update parent form data if callback exists
+      // Update parent form data
       if (setFormData) {
-        setFormData(prev => ({
-          ...prev,
-          partB: newData.partB,
-          partC: newData.partC
+        setFormData(prevFormData => ({
+          ...prevFormData,
+          partB: newData
         }));
       }
       
@@ -152,22 +193,18 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
 
   const handleNext = () => {
     console.log('=== UnitPageB handleNext DEBUG ===');
-    console.log('localData:', localData);
-    console.log('localData.partB:', localData.partB);
-    console.log('localData.partC:', localData.partC);
-    console.log('localData.partC.growthAcceleration:', localData.partC?.growthAcceleration);
-    console.log('localData.partC.growthAcceleration type:', typeof localData.partC?.growthAcceleration);
+    console.log('partBData:', partBData);
+    console.log('partCData:', partCData);
     
     // Update the parent form data with UnitPageB data before submitting
     if (setFormData) {
       setFormData(prev => {
         const newData = {
           ...prev,
-          partB: localData.partB,
-          partC: localData.partC
+          partB: partBData,
+          partC: partCData
         };
         console.log('Updated formData:', newData);
-        console.log('Updated partC.growthAcceleration:', newData.partC?.growthAcceleration);
         return newData;
       });
     }
@@ -180,7 +217,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
 
   const handlePrevious = () => {
     if (onPrevious) {
-      onPrevious(localData);
+      onPrevious({ partB: partBData, partC: partCData });
     }
   };
 
@@ -245,8 +282,11 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               </label>
               <input
                 type="number"
-                value={localData.partB?.newJIHMembers?.male || ''}
-                onChange={(e) => handleInputChange('partB.newJIHMembers.male', e.target.value)}
+                value={partBData.newJIHMembers.male || ''}
+                onChange={(e) => {
+                  console.log('Male input changed:', e.target.value);
+                  handlePartBInputChange('newJIHMembers.male', e.target.value);
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 placeholder="എണ്ണം നൽകുക"
               />
@@ -258,8 +298,11 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               </label>
               <input
                 type="number"
-                value={localData.partB?.newJIHMembers?.female || ''}
-                onChange={(e) => handleInputChange('partB.newJIHMembers.female', e.target.value)}
+                value={partBData.newJIHMembers.female || ''}
+                onChange={(e) => {
+                  console.log('Female input changed:', e.target.value);
+                  handlePartBInputChange('newJIHMembers.female', e.target.value);
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 placeholder="എണ്ണം നൽകുക"
               />
@@ -274,7 +317,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
           </label>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {memberCategoriesOptions.map((option) => {
-              const isChecked = localData.partB?.memberCategories?.[option.key] || false;
+              const isChecked = partBData.memberCategories[option.key] || false;
               return (
                 <div key={option.key} className="flex items-center space-x-2">
                   <input
@@ -312,8 +355,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               </label>
               <input
                 type="number"
-                value={localData.partC?.growthAcceleration?.rukkun || ''}
-                onChange={(e) => handleInputChange('partC.growthAcceleration.rukkun', e.target.value)}
+                value={partCData.growthAcceleration.rukkun || ''}
+                onChange={(e) => handlePartCInputChange('growthAcceleration.rukkun', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 placeholder="എണ്ണം നൽകുക"
               />
@@ -325,8 +368,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               </label>
               <input
                 type="number"
-                value={localData.partC?.growthAcceleration?.karkun || ''}
-                onChange={(e) => handleInputChange('partC.growthAcceleration.karkun', e.target.value)}
+                value={partCData.growthAcceleration.karkun || ''}
+                onChange={(e) => handlePartCInputChange('growthAcceleration.karkun', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 placeholder="എണ്ണം നൽകുക"
               />
@@ -338,8 +381,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               </label>
               <input
                 type="number"
-                value={localData.partC?.growthAcceleration?.solidarity || ''}
-                onChange={(e) => handleInputChange('partC.growthAcceleration.solidarity', e.target.value)}
+                value={partCData.growthAcceleration.solidarity || ''}
+                onChange={(e) => handlePartCInputChange('growthAcceleration.solidarity', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 placeholder="എണ്ണം നൽകുക"
               />
@@ -351,8 +394,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               </label>
               <input
                 type="number"
-                value={localData.partC?.growthAcceleration?.sio || ''}
-                onChange={(e) => handleInputChange('partC.growthAcceleration.sio', e.target.value)}
+                value={partCData.growthAcceleration.sio || ''}
+                onChange={(e) => handlePartCInputChange('growthAcceleration.sio', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 placeholder="എണ്ണം നൽകുക"
               />
@@ -364,8 +407,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               </label>
               <input
                 type="number"
-                value={localData.partC?.growthAcceleration?.gio || ''}
-                onChange={(e) => handleInputChange('partC.growthAcceleration.gio', e.target.value)}
+                value={partCData.growthAcceleration.gio || ''}
+                onChange={(e) => handlePartCInputChange('growthAcceleration.gio', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 placeholder="എണ്ണം നൽകുക"
               />
@@ -377,8 +420,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               </label>
               <input
                 type="number"
-                value={localData.partC?.growthAcceleration?.teenIndia || ''}
-                onChange={(e) => handleInputChange('partC.growthAcceleration.teenIndia', e.target.value)}
+                value={partCData.growthAcceleration.teenIndia || ''}
+                onChange={(e) => handlePartCInputChange('growthAcceleration.teenIndia', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 placeholder="എണ്ണം നൽകുക"
               />
@@ -390,8 +433,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               </label>
               <input
                 type="number"
-                value={localData.partC?.growthAcceleration?.malarvadi || ''}
-                onChange={(e) => handleInputChange('partC.growthAcceleration.malarvadi', e.target.value)}
+                value={partCData.growthAcceleration.malarvadi || ''}
+                onChange={(e) => handlePartCInputChange('growthAcceleration.malarvadi', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 placeholder="എണ്ണം നൽകുക"
               />

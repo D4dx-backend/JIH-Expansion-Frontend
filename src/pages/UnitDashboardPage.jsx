@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { LogOut, FileText, Search, Filter, Edit, Trash2, Calendar, ArrowLeft } from 'lucide-react';
+import { LogOut, FileText, Search, Filter, Edit, Trash2, Calendar, ArrowLeft, Eye, Save } from 'lucide-react';
 import axios from 'axios';
 import FormDetailPage from './FormDetailPage';
 import FormPage from './FormPage';
+import UnitSurveyPage from './UnitSurveyPage';
 import { FormProvider } from '../contexts/FormContext';
 import ConfirmationModal from '../components/ConfirmationModal';
 import StatisticsCard from '../components/charts/StatisticsCard';
@@ -34,6 +35,8 @@ const UnitDashboardPage = ({ onLogout }) => {
   const [showFormEdit, setShowFormEdit] = useState(false);
   const [showCreateSurvey, setShowCreateSurvey] = useState(false);
   const [selectedFormId, setSelectedFormId] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [viewingSurvey, setViewingSurvey] = useState(null);
   
   // Filtering
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,6 +115,8 @@ const UnitDashboardPage = ({ onLogout }) => {
   const loadMonthlySurveys = async () => {
     try {
       setIsLoading(true);
+      setError('');
+      setSuccessMessage('');
       const token = localStorage.getItem('userToken');
       const params = new URLSearchParams({
         page: currentPage,
@@ -121,8 +126,8 @@ const UnitDashboardPage = ({ onLogout }) => {
       
       if (monthFilter) params.append('month', monthFilter);
 
-      // This endpoint would need to be created in backend to filter by unit
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/monthly-surveys/unit?${params}`, {
+      // Get unit surveys for the current unit
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/unit/unit-surveys/unit/${unitId}?${params}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -167,14 +172,52 @@ const UnitDashboardPage = ({ onLogout }) => {
     setCurrentPage(1);
   };
 
-  const handleViewSurvey = (survey) => {
-    setSelectedFormId(survey._id);
-    setShowDetailView(true);
+  const handleViewSurvey = async (survey) => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem('userToken');
+      
+      // Load full survey details from API
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/unit/unit-survey/${survey._id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      setViewingSurvey(response.data.survey);
+      setShowDetailView(true);
+    } catch (error) {
+      console.error('Error loading survey details:', error);
+      setError('സർവേ വിവരങ്ങൾ ലോഡ് ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEditSurvey = (survey) => {
+    console.log('=== SIMPLE EDIT HANDLER ===');
+    console.log('Survey:', survey);
+    console.log('Survey ID:', survey._id);
+    console.log('Before setting state - showFormEdit:', showFormEdit);
+    console.log('Before setting state - editingSurvey:', editingSurvey);
+    
+    // Set editing survey directly
     setEditingSurvey(survey);
     setShowFormEdit(true);
+    
+    console.log('After setting state - showFormEdit should be true');
+    console.log('After setting state - editingSurvey should be set');
+    console.log('Edit form should be showing now');
+    
+    // Force re-render after state update
+    setTimeout(() => {
+      console.log('=== AFTER TIMEOUT ===');
+      console.log('showFormEdit should be true now');
+      console.log('editingSurvey should be set now');
+    }, 100);
+    
+    console.log('=== END SIMPLE EDIT ===');
   };
 
   const handleDeleteSurvey = (survey) => {
@@ -192,12 +235,19 @@ const UnitDashboardPage = ({ onLogout }) => {
       const token = localStorage.getItem('userToken');
       
       if (surveyToDelete) {
-        const endpoint = `${import.meta.env.VITE_API_URL}/api/user/monthly-survey/${surveyToDelete._id}`;
+        const endpoint = `${import.meta.env.VITE_API_URL}/api/unit/unit-survey/${surveyToDelete._id}`;
           
         await axios.delete(endpoint, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        
+        setSuccessMessage(`${surveyToDelete.month} മാസത്തിലെ സർവേ വിജയകരമായി ഡിലീറ്റ് ചെയ്തു!`);
         setSurveyToDelete(null);
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 3000);
         
         loadMonthlySurveys();
       }
@@ -205,9 +255,18 @@ const UnitDashboardPage = ({ onLogout }) => {
       setShowDeleteModal(false);
     } catch (error) {
       console.error('Error deleting survey:', error);
-      setError('Failed to delete survey');
+      setError('സർവേ ഡിലീറ്റ് ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു');
     }
   };
+
+  // Debug: Monitor state changes
+  useEffect(() => {
+    console.log('=== STATE CHANGED ===');
+    console.log('showFormEdit:', showFormEdit);
+    console.log('showCreateSurvey:', showCreateSurvey);
+    console.log('editingSurvey:', editingSurvey);
+    console.log('=== END STATE CHANGE ===');
+  }, [showFormEdit, showCreateSurvey, editingSurvey]);
 
   // Calculate statistics
   const unitStats = {
@@ -239,60 +298,368 @@ const UnitDashboardPage = ({ onLogout }) => {
     survey._id?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (showDetailView) {
+  if (showDetailView && viewingSurvey) {
     return (
-      <FormDetailPage
-        formId={selectedFormId}
-        formData={editingSurvey}
-        onBack={() => {
-          setShowDetailView(false);
-          setSelectedFormId(null);
-          setEditingSurvey(null);
-        }}
-        onEdit={(form) => {
-          setShowDetailView(false);
-          setSelectedFormId(null);
-          setEditingSurvey(form);
-          setShowFormEdit(true);
-        }}
-        onDelete={() => {
-          setShowDetailView(false);
-          setSelectedFormId(null);
-          setEditingSurvey(null);
-          loadMonthlySurveys();
-        }}
-        isAdmin={false}
-      />
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row justify-between items-center py-4 sm:py-6 gap-4">
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => {
+                    setShowDetailView(false);
+                    setViewingSurvey(null);
+                    setSelectedFormId(null);
+                  }}
+                  className="flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  title="Go back"
+                >
+                  <ArrowLeft className="w-4 h-4 text-gray-600" />
+                </button>
+                <img src={jihLogo} alt="JIH Logo" className="h-8 sm:h-12 w-auto" />
+                <div>
+                  <h1 className="text-lg sm:text-2xl font-bold text-gray-900">Unit Survey Details</h1>
+                  <p className="text-sm text-gray-600">
+                    {viewingSurvey.month} {viewingSurvey.year} - {viewingSurvey.component}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => {
+                    console.log('=== EDIT BUTTON CLICKED ===');
+                    console.log('viewingSurvey:', viewingSurvey);
+                    console.log('viewingSurvey._id:', viewingSurvey._id);
+                    console.log('=== END EDIT BUTTON DEBUG ===');
+                    
+                    setShowDetailView(false);
+                    setViewingSurvey(null);
+                    setEditingSurvey(viewingSurvey);
+                    setShowFormEdit(true);
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Edit</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setSurveyToDelete(viewingSurvey);
+                    setShowDeleteModal(true);
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Survey Details */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Survey Information</h2>
+            
+            {/* Basic Information Table */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">District</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.district}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Area</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.area}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Component</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.component}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Month</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.month}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Year</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.year}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Workers Information */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Workers Information</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Rukkun</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.workers?.rukkun || 0}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Karkun</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.workers?.karkun || 0}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Active Associate</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.workers?.activeAssociate || 0}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Part A - Spoken Persons */}
+            {viewingSurvey.partA && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Part A - Spoken Persons</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Male Spoken Persons</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partA.spokenPersons?.male || 0}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Female Spoken Persons</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partA.spokenPersons?.female || 0}</td>
+                      </tr>
+                      {viewingSurvey.partA.codes && (
+                        <tr>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Codes</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partA.codes}</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Authority Persons Checkboxes */}
+                {viewingSurvey.partA.authorityPersons && (
+                  <div className="mt-6">
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Authority Persons (അധികാരത്തിൽ പെട്ടവരോട് സംസാരിച്ചവർ)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {[
+                        { key: 'qscStudent', label: 'QSC പഠിത്താവ്' },
+                        { key: 'regularKhutbaListener', label: 'സ്ഥിരമായ കുത്തബ കേൾക്കുന്നവർ' },
+                        { key: 'prabodhanamReader', label: 'പ്രബോധന വായനക്കാരൻ' },
+                        { key: 'pfBeneficiary', label: 'PF ഗുണഭോക്താവ്' },
+                        { key: 'bzBeneficiary', label: 'BZ ഗുണഭോക്താവ്' },
+                        { key: 'regionalReliefBeneficiary', label: 'പ്രദേശിക റിലീഫ് ഗുണഭോക്താവ്' },
+                        { key: 'interestFreeJusticeBeneficiary', label: 'പലിശരഹിത നീതി ഗുണഭോക്താവ്' },
+                        { key: 'sahitiyabandham', label: 'സാഹിത്യബന്ധം' },
+                        { key: 'aaramamReader', label: 'ആരാമം വായനക്കാരി' },
+                        { key: 'tamheedulManhabStudent', label: 'തംഹീദുൽ മൻഹബ് പഠിത്താവ്' },
+                        { key: 'institutionAlumni', label: 'സ്ഥാപനത്തിലെ പൂർവ്വവിദ്യാർത്ഥി' },
+                        { key: 'neighborhoodGroupMember', label: 'അയൽക്കൂട്ടം അംഗം' },
+                        { key: 'friendshipForumMember', label: 'സൗഹൃദവേദി അംഗം' },
+                        { key: 'palliativeConnection', label: 'പാലിയേറ്റീവ് ബന്ധം' },
+                        { key: 'neighborhoodGroupMember2', label: 'അയൽക്കൂട്ടം അംഗം' },
+                        { key: 'friendsClubMember', label: 'ഫ്രണ്ട്സ് ക്ലബ് അംഗം' },
+                        { key: 'mediaReader', label: 'മാധ്യമം വായനക്കാരൻ' },
+                        { key: 'ayathulDursalQuranStudent', label: 'ആയത്തുൽ ദുർസൽ ഖുർആൻ പഠിത്താവ്' },
+                        { key: 'heavensGuardian', label: 'ഹെവൻസിലെ രക്ഷിതാവ്' },
+                        { key: 'schoolGuardian', label: 'സ്കൂളിലെ രക്ഷിതാവ്' },
+                        { key: 'arabicCollegeGuardian', label: 'അറബിക് കോളേജ് രക്ഷിതാവ്' },
+                        { key: 'arabicCollegeStudent', label: 'അറബിക് കോളേജ് വിദ്യാർത്ഥി' },
+                        { key: 'artsCollegeStudent', label: 'ആർട്സ് കോളേജ് വിദ്യാർത്ഥി' },
+                        { key: 'artsCollegeGuardian', label: 'ആർട്സ് കോളേജ് രക്ഷിതാവ്' },
+                        { key: 'publicCampusStudent', label: 'പൊതു ക്യാമ്പസിലെ വിദ്യാർത്ഥി' },
+                        { key: 'otherNGOs', label: 'മറ്റു NGOകൾ' },
+                        { key: 'mahalluConnection', label: 'മഹല്ലുമുഖേനയുള്ള ബന്ധം' },
+                        { key: 'fullTimeWorkerConnection', label: 'ഫുൾടൈം പ്രവർത്തകനുമായുള്ള ബന്ധം' }
+                      ].map((option) => {
+                        const isChecked = viewingSurvey.partA.authorityPersons?.[option.key];
+                        return (
+                          <div key={option.key} className={`p-2 rounded text-sm ${isChecked ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+                            <span className={isChecked ? 'font-medium' : ''}>{option.label}</span>
+                            {isChecked && <span className="ml-2 text-green-600">✓</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Part B - New JIH Members */}
+            {viewingSurvey.partB && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Part B - New JIH Members</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Male New Members</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partB.newJIHMembers?.male || 0}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Female New Members</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partB.newJIHMembers?.female || 0}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Member Categories Checkboxes */}
+                {viewingSurvey.partB.memberCategories && (
+                  <div className="mt-6">
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Member Categories (ഏത് കാറ്റഗറിയിൽ പെട്ടവരാണ് വന്നവർ)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {[
+                        { key: 'qscStudent', label: 'QSC പഠിത്താവ്' },
+                        { key: 'regularKhutbaListener', label: 'സ്ഥിരമായ കുത്തബ കേൾക്കുന്നവർ' },
+                        { key: 'prabodhanamReader', label: 'പ്രബോധന വായനക്കാരൻ' },
+                        { key: 'pfBeneficiary', label: 'PF ഗുണഭോക്താവ്' },
+                        { key: 'bzBeneficiary', label: 'BZ ഗുണഭോക്താവ്' },
+                        { key: 'regionalReliefBeneficiary', label: 'പ്രദേശിക റിലീഫ് ഗുണഭോക്താവ്' },
+                        { key: 'interestFreeJusticeBeneficiary', label: 'പലിശരഹിത നീതി ഗുണഭോക്താവ്' },
+                        { key: 'sahitiyabandham', label: 'സാഹിത്യബന്ധം' },
+                        { key: 'aaramamReader', label: 'ആരാമം വായനക്കാരി' },
+                        { key: 'tamheedulManhabStudent', label: 'തംഹീദുൽ മൻഹബ് പഠിത്താവ്' },
+                        { key: 'institutionAlumni', label: 'സ്ഥാപനത്തിലെ പൂർവ്വവിദ്യാർത്ഥി' },
+                        { key: 'neighborhoodGroupMember', label: 'അയൽക്കൂട്ടം അംഗം' },
+                        { key: 'friendshipForumMember', label: 'സൗഹൃദവേദി അംഗം' },
+                        { key: 'palliativeConnection', label: 'പാലിയേറ്റീവ് ബന്ധം' },
+                        { key: 'neighborhoodGroupMember2', label: 'അയൽക്കൂട്ടം അംഗം' },
+                        { key: 'friendsClubMember', label: 'ഫ്രണ്ട്സ് ക്ലബ് അംഗം' },
+                        { key: 'mediaReader', label: 'മാധ്യമം വായനക്കാരൻ' },
+                        { key: 'ayathulDursalQuranStudent', label: 'ആയത്തുൽ ദുർസൽ ഖുർആൻ പഠിത്താവ്' },
+                        { key: 'heavensGuardian', label: 'ഹെവൻസിലെ രക്ഷിതാവ്' },
+                        { key: 'schoolGuardian', label: 'സ്കൂളിലെ രക്ഷിതാവ്' },
+                        { key: 'arabicCollegeGuardian', label: 'അറബിക് കോളേജ് രക്ഷിതാവ്' },
+                        { key: 'arabicCollegeStudent', label: 'അറബിക് കോളേജ് വിദ്യാർത്ഥി' },
+                        { key: 'artsCollegeStudent', label: 'ആർട്സ് കോളേജ് വിദ്യാർത്ഥി' },
+                        { key: 'artsCollegeGuardian', label: 'ആർട്സ് കോളേജ് രക്ഷിതാവ്' },
+                        { key: 'publicCampusStudent', label: 'പൊതു ക്യാമ്പസിലെ വിദ്യാർത്ഥി' },
+                        { key: 'otherNGOs', label: 'മറ്റു NGOകൾ' },
+                        { key: 'mahalluConnection', label: 'മഹല്ലുമുഖേനയുള്ള ബന്ധം' },
+                        { key: 'fullTimeWorkerConnection', label: 'ഫുൾടൈം പ്രവർത്തകനുമായുള്ള ബന്ധം' }
+                      ].map((option) => {
+                        const isChecked = viewingSurvey.partB.memberCategories?.[option.key];
+                        return (
+                          <div key={option.key} className={`p-2 rounded text-sm ${isChecked ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+                            <span className={isChecked ? 'font-medium' : ''}>{option.label}</span>
+                            {isChecked && <span className="ml-2 text-green-600">✓</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Part C - Growth Acceleration */}
+            {viewingSurvey.partC && viewingSurvey.partC.growthAcceleration && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Part C - Growth Acceleration</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Rukkun</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partC.growthAcceleration.rukkun || 0}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Karkun</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partC.growthAcceleration.karkun || 0}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Solidarity</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partC.growthAcceleration.solidarity || 0}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">SIO</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partC.growthAcceleration.sio || 0}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">GIO</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partC.growthAcceleration.gio || 0}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Teen India</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partC.growthAcceleration.teenIndia || 0}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Malarvadi</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.partC.growthAcceleration.malarvadi || 0}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Submission Information */}
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Submission Information</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Submitted By</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{viewingSurvey.submittedBy}</td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Submitted At</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {new Date(viewingSurvey.submittedAt).toLocaleDateString()} at{' '}
+                        {new Date(viewingSurvey.submittedAt).toLocaleTimeString()}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     );
   }
 
 
+  console.log('=== CONDITIONAL RENDERING CHECK ===');
+  console.log('showFormEdit:', showFormEdit);
+  console.log('showCreateSurvey:', showCreateSurvey);
+  console.log('editingSurvey:', editingSurvey);
+  console.log('=== END CONDITIONAL RENDERING CHECK ===');
+
   if (showFormEdit || showCreateSurvey) {
+    console.log('=== RENDERING UnitSurveyPage ===');
+    console.log('showFormEdit:', showFormEdit);
+    console.log('showCreateSurvey:', showCreateSurvey);
+    console.log('editingSurvey:', editingSurvey);
+    console.log('=== END UnitSurveyPage RENDER DEBUG ===');
+    
     return (
-      <FormProvider>
-        <FormPage
-          onBack={() => {
-            if (showCreateSurvey) {
-              setShowCreateSurvey(false);
-            } else {
-              setShowFormEdit(false);
-              setEditingSurvey(null);
-            }
-          }}
-          onSubmit={() => {
-            if (showCreateSurvey) {
-              setShowCreateSurvey(false);
-            } else {
-              setShowFormEdit(false);
-              setEditingSurvey(null);
-            }
-            loadMonthlySurveys();
-          }}
-          editingForm={editingSurvey}
-          isAdmin={false}
-          formType="monthly"
-        />
-      </FormProvider>
+      <UnitSurveyPage
+        onBack={() => {
+          console.log('=== onBack FUNCTION CALLED ===');
+          console.log('showCreateSurvey:', showCreateSurvey);
+          console.log('showFormEdit:', showFormEdit);
+          console.log('=== END onBack DEBUG ===');
+          
+          if (showCreateSurvey) {
+            setShowCreateSurvey(false);
+          } else {
+            setShowFormEdit(false);
+            setEditingSurvey(null);
+          }
+          // Reload surveys when going back
+          loadMonthlySurveys();
+        }}
+        editingSurvey={showCreateSurvey ? null : editingSurvey}
+      />
     );
   }
 
@@ -470,7 +837,7 @@ const UnitDashboardPage = ({ onLogout }) => {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Status
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
                           </th>
                         </tr>
@@ -494,25 +861,43 @@ const UnitDashboardPage = ({ onLogout }) => {
                                 Submitted
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex space-x-2">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
+                              <div className="flex items-center justify-center space-x-2" style={{ pointerEvents: 'auto' }}>
+                                {/* View Button */}
                                 <button
                                   onClick={() => handleViewSurvey(survey)}
-                                  className="text-blue-600 hover:text-blue-900"
+                                  className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors duration-200"
+                                  title="View Survey Details"
                                 >
+                                  <Eye className="w-3.5 h-3.5 mr-1" />
                                   View
                                 </button>
+                                
+                                {/* Edit Button */}
                                 <button
-                                  onClick={() => handleEditSurvey(survey)}
-                                  className="text-green-600 hover:text-green-900"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    console.log('=== BUTTON CLICKED ===');
+                                    alert('Edit button clicked!');
+                                    handleEditSurvey(survey);
+                                  }}
+                                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-colors duration-200"
+                                  title="Edit Survey"
+                                  style={{ zIndex: 999 }}
                                 >
-                                  <Edit className="w-4 h-4" />
+                                  <Edit className="w-3.5 h-3.5 mr-1" />
+                                  Edit
                                 </button>
+                                
+                                {/* Delete Button */}
                                 <button
                                   onClick={() => handleDeleteSurvey(survey)}
-                                  className="text-red-600 hover:text-red-900"
+                                  className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors duration-200"
+                                  title="Delete Survey"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                  Delete
                                 </button>
                               </div>
                             </td>
@@ -633,7 +1018,7 @@ const UnitDashboardPage = ({ onLogout }) => {
                   <button
                     onClick={() => {
                       setEditingSurvey(null);
-                      setShowUnitSurvey(true);
+                      setShowCreateSurvey(true);
                     }}
                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center space-x-2"
                   >
@@ -644,6 +1029,15 @@ const UnitDashboardPage = ({ onLogout }) => {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <Check className="w-5 h-5 text-green-600" />
+              <p className="text-green-700 text-sm font-medium">{successMessage}</p>
             </div>
           </div>
         )}
@@ -663,9 +1057,9 @@ const UnitDashboardPage = ({ onLogout }) => {
           setSurveyToDelete(null);
         }}
         onConfirm={confirmDelete}
-        title="Delete Monthly Survey"
-        message={`Are you sure you want to delete the monthly survey for ${surveyToDelete?.month}? This action cannot be undone.`}
-        confirmText="Delete"
+        title="സർവേ ഡിലീറ്റ് ചെയ്യുക"
+        message={`${surveyToDelete?.month} മാസത്തിലെ യൂണിറ്റ് സർവേ ഡിലീറ്റ് ചെയ്യാൻ താങ്കൾക്ക് തീർച്ചയാണോ? ഈ പ്രവർത്തനം പിന്നീട് തിരിച്ചെടുക്കാൻ കഴിയില്ല.`}
+        confirmText="ഡിലീറ്റ് ചെയ്യുക"
         confirmColor="red"
       />
 
@@ -673,9 +1067,9 @@ const UnitDashboardPage = ({ onLogout }) => {
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
         onConfirm={confirmLogout}
-        title="Logout"
-        message="Are you sure you want to logout?"
-        confirmText="Logout"
+        title="ലോഗൗട്ട്"
+        message="താങ്കൾ ലോഗൗട്ട് ചെയ്യാൻ തീർച്ചയാണോ?"
+        confirmText="ലോഗൗട്ട്"
         confirmColor="red"
       />
     </div>

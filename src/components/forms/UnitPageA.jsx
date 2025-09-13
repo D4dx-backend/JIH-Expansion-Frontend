@@ -128,7 +128,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
             component: componentName
           }));
           
-          // Also update the parent form data
+          // Also update the parent form data - only update relevant parts
           if (setFormData) {
             setFormData(prev => ({
               ...prev,
@@ -161,8 +161,78 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
         // Check if the formData is actually different to avoid unnecessary updates
         const hasChanges = JSON.stringify(prev) !== JSON.stringify(formData);
         if (hasChanges) {
-          console.log('Updating localData from formData:', formData);
-          return { ...prev, ...formData };
+          console.log('=== UnitPageA: Updating localData from formData ===');
+          console.log('Previous localData:', prev);
+          console.log('FormData received:', formData);
+          console.log('FormData partA:', formData.partA);
+          console.log('FormData spokenPersons:', formData.partA?.spokenPersons);
+          console.log('=== END UnitPageA formData debug ===');
+          
+          // Only update the parts that UnitPageA cares about
+          const newLocalData = {
+            ...prev,
+            district: formData.district || prev.district,
+            area: formData.area || prev.area,
+            component: formData.component || prev.component,
+            workers: {
+              rukkun: '',
+              karkun: '',
+              activeAssociate: '',
+              ...prev.workers,
+              ...formData.workers
+            },
+            partA: {
+              codes: '',
+              ...prev.partA,
+              ...formData.partA,
+              spokenPersons: {
+                male: '',
+                female: '',
+                ...prev.partA?.spokenPersons,
+                ...formData.partA?.spokenPersons
+              },
+              authorityPersons: {
+                qscStudent: false,
+                regularKhutbaListener: false,
+                prabodhanamReader: false,
+                pfBeneficiary: false,
+                bzBeneficiary: false,
+                regionalReliefBeneficiary: false,
+                interestFreeJusticeBeneficiary: false,
+                sahitiyabandham: false,
+                aaramamReader: false,
+                tamheedulManhabStudent: false,
+                institutionAlumni: false,
+                neighborhoodGroupMember: false,
+                friendshipForumMember: false,
+                palliativeConnection: false,
+                neighborhoodGroupMember2: false,
+                friendsClubMember: false,
+                mediaReader: false,
+                ayathulDursalQuranStudent: false,
+                heavensGuardian: false,
+                schoolGuardian: false,
+                arabicCollegeGuardian: false,
+                arabicCollegeStudent: false,
+                artsCollegeStudent: false,
+                artsCollegeGuardian: false,
+                publicCampusStudent: false,
+                otherNGOs: false,
+                mahalluConnection: false,
+                fullTimeWorkerConnection: false,
+                ...prev.partA?.authorityPersons,
+                ...formData.partA?.authorityPersons
+              }
+            }
+          };
+          
+          console.log('=== UnitPageA: New localData ===');
+          console.log('New localData:', newLocalData);
+          console.log('New localData partA:', newLocalData.partA);
+          console.log('New localData spokenPersons:', newLocalData.partA?.spokenPersons);
+          console.log('=== END UnitPageA new localData debug ===');
+          
+          return newLocalData;
         }
         return prev;
       });
@@ -185,14 +255,59 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
   }, []);
 
   const handleInputChange = useCallback((field, value) => {
+    console.log('=== UnitPageA handleInputChange ===');
+    console.log('Field:', field);
+    console.log('Value:', value);
+    console.log('Current localData before change:', localData);
+    console.log('=== END handleInputChange debug ===');
+    
     setLocalData(prevData => {
       const newData = { 
         ...prevData,
-        workers: { ...prevData.workers },
+        workers: { 
+          rukkun: '',
+          karkun: '',
+          activeAssociate: '',
+          ...prevData.workers 
+        },
         partA: {
           ...prevData.partA,
-          spokenPersons: { ...prevData.partA.spokenPersons },
-          authorityPersons: { ...prevData.partA.authorityPersons }
+          spokenPersons: { 
+            male: prevData.partA?.spokenPersons?.male || '',
+            female: prevData.partA?.spokenPersons?.female || '',
+            ...prevData.partA?.spokenPersons 
+          },
+          authorityPersons: { 
+            qscStudent: false,
+            regularKhutbaListener: false,
+            prabodhanamReader: false,
+            pfBeneficiary: false,
+            bzBeneficiary: false,
+            regionalReliefBeneficiary: false,
+            interestFreeJusticeBeneficiary: false,
+            sahitiyabandham: false,
+            aaramamReader: false,
+            tamheedulManhabStudent: false,
+            institutionAlumni: false,
+            neighborhoodGroupMember: false,
+            friendshipForumMember: false,
+            palliativeConnection: false,
+            neighborhoodGroupMember2: false,
+            friendsClubMember: false,
+            mediaReader: false,
+            ayathulDursalQuranStudent: false,
+            heavensGuardian: false,
+            schoolGuardian: false,
+            arabicCollegeGuardian: false,
+            arabicCollegeStudent: false,
+            artsCollegeStudent: false,
+            artsCollegeGuardian: false,
+            publicCampusStudent: false,
+            otherNGOs: false,
+            mahalluConnection: false,
+            fullTimeWorkerConnection: false,
+            ...prevData.partA?.authorityPersons 
+          }
         }
       };
       
@@ -216,10 +331,23 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
         newData[field] = value;
       }
       
-      // Update parent form data if callback exists
+      // Update parent form data if callback exists - only update relevant parts
       if (setFormData) {
-        setFormData(newData);
+        setFormData(prevFormData => ({
+          ...prevFormData,
+          district: newData.district,
+          area: newData.area,
+          component: newData.component,
+          workers: newData.workers,
+          partA: newData.partA
+        }));
       }
+      
+      console.log('=== UnitPageA newData after change ===');
+      console.log('New data:', newData);
+      console.log('New data partA:', newData.partA);
+      console.log('New data spokenPersons:', newData.partA?.spokenPersons);
+      console.log('=== END newData debug ===');
       
       return newData;
     });
@@ -240,9 +368,12 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
         }
       };
       
-      // Update parent form data if callback exists
+      // Update parent form data if callback exists - only update relevant parts
       if (setFormData) {
-        setFormData(newData);
+        setFormData(prevFormData => ({
+          ...prevFormData,
+          partA: newData.partA
+        }));
       }
       
       return newData;
@@ -422,8 +553,39 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               </label>
               <input
                 type="number"
-                value={localData.partA.spokenPersons.male}
-                onChange={(e) => handleInputChange('partA.spokenPersons.male', e.target.value)}
+                value={localData.partA?.spokenPersons?.male || ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  console.log('Male input changed:', value);
+                  setLocalData(prev => {
+                    const newData = {
+                      ...prev,
+                      partA: {
+                        ...prev.partA,
+                        spokenPersons: {
+                          ...prev.partA?.spokenPersons,
+                          male: value
+                        }
+                      }
+                    };
+                    console.log('Updated localData for male:', newData);
+                    return newData;
+                  });
+                  
+                  // Also update parent form data
+                  if (setFormData) {
+                    setFormData(prevFormData => ({
+                      ...prevFormData,
+                      partA: {
+                        ...prevFormData.partA,
+                        spokenPersons: {
+                          ...prevFormData.partA?.spokenPersons,
+                          male: value
+                        }
+                      }
+                    }));
+                  }
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 placeholder="എണ്ണം നൽകുക"
               />
@@ -435,8 +597,39 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               </label>
               <input
                 type="number"
-                value={localData.partA.spokenPersons.female}
-                onChange={(e) => handleInputChange('partA.spokenPersons.female', e.target.value)}
+                value={localData.partA?.spokenPersons?.female || ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  console.log('Female input changed:', value);
+                  setLocalData(prev => {
+                    const newData = {
+                      ...prev,
+                      partA: {
+                        ...prev.partA,
+                        spokenPersons: {
+                          ...prev.partA?.spokenPersons,
+                          female: value
+                        }
+                      }
+                    };
+                    console.log('Updated localData for female:', newData);
+                    return newData;
+                  });
+                  
+                  // Also update parent form data
+                  if (setFormData) {
+                    setFormData(prevFormData => ({
+                      ...prevFormData,
+                      partA: {
+                        ...prevFormData.partA,
+                        spokenPersons: {
+                          ...prevFormData.partA?.spokenPersons,
+                          female: value
+                        }
+                      }
+                    }));
+                  }
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 placeholder="എണ്ണം നൽകുക"
               />
